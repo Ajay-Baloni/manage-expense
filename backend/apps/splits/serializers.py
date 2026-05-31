@@ -47,13 +47,6 @@ class SplitExpenseSerializer(serializers.ModelSerializer):
             return obj.paid_by_guest.name
         return 'Unknown'
 
-    def validate(self, attrs):
-        if not attrs.get('paid_by_user') and not attrs.get('paid_by_guest'):
-            raise serializers.ValidationError(
-                'An expense must have a payer: set either paid_by_user or paid_by_guest.'
-            )
-        return attrs
-
     def create(self, validated_data):
         shares_data = validated_data.pop('shares_data', [])
         expense = SplitExpense.objects.create(**validated_data)

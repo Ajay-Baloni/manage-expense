@@ -122,6 +122,7 @@ createdb expense_manager
 ### 6. Run migrations
 
 ```bash
+python manage.py makemigrations accounts transactions categories splits reports
 python manage.py migrate
 ```
 

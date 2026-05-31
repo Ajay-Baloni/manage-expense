@@ -71,12 +71,15 @@ class TransactionViewSet(viewsets.ModelViewSet):
             return round((current - prev) / prev * 100, 2)
 
         # Monthly breakdown last 6 months
+        import calendar
         monthly_breakdown = []
         for i in range(5, -1, -1):
-            ref = today.replace(day=1) - timedelta(days=i * 28)
-            m_start = date(ref.year, ref.month, 1)
-            import calendar
-            m_end = date(ref.year, ref.month, calendar.monthrange(ref.year, ref.month)[1])
+            # Walk back i whole months from the current month using month arithmetic
+            total_month = (today.year * 12 + (today.month - 1)) - i
+            ref_year = total_month // 12
+            ref_month = total_month % 12 + 1
+            m_start = date(ref_year, ref_month, 1)
+            m_end = date(ref_year, ref_month, calendar.monthrange(ref_year, ref_month)[1])
             m_qs = qs.filter(date__gte=m_start, date__lte=m_end)
             monthly_breakdown.append({
                 'month': m_start.strftime('%Y-%m'),

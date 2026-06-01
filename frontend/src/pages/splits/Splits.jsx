@@ -1,7 +1,8 @@
 import { useEffect, useState } from 'react'
-import { Plus } from 'lucide-react'
+import { Plus, Users } from 'lucide-react'
 import { useSplitStore } from '../../store/splitStore'
 import { SplitGroupCard } from '../../components/SplitGroupCard'
+import { PageHeader } from '../../components/layout/PageHeader'
 import { Button } from '../../components/ui/button'
 import { Input } from '../../components/ui/input'
 import { Label } from '../../components/ui/label'
@@ -30,21 +31,31 @@ export default function Splits() {
   }
 
   return (
-    <div className="space-y-4">
-      <div className="flex justify-between items-center">
-        <p className="text-muted-foreground text-sm">{groups.length} group{groups.length !== 1 ? 's' : ''}</p>
-        <Button size="sm" onClick={() => setModal(true)}>
-          <Plus className="h-4 w-4 mr-2" />New Group
+    <div className="space-y-5">
+      <PageHeader
+        title="Split Expenses"
+        description="Share costs and settle up with friends and groups."
+      >
+        <Button size="sm" className="h-9" onClick={() => setModal(true)}>
+          <Plus className="h-4 w-4 mr-1.5" />New Group
         </Button>
-      </div>
+      </PageHeader>
 
       {groups.length === 0 ? (
-        <div className="text-center py-16 text-muted-foreground">
-          <p className="text-lg font-medium">No split groups yet</p>
-          <p className="text-sm">Create a group to start splitting expenses with friends</p>
+        <div className="flex flex-col items-center justify-center rounded-xl border border-dashed border-border py-16 text-center">
+          <div className="flex h-12 w-12 items-center justify-center rounded-full bg-muted mb-3">
+            <Users className="h-6 w-6 text-muted-foreground" />
+          </div>
+          <p className="text-base font-medium text-foreground">No split groups yet</p>
+          <p className="text-sm text-muted-foreground mt-1 max-w-xs">
+            Create a group to start splitting expenses and tracking who owes what.
+          </p>
+          <Button size="sm" className="h-9 mt-4" onClick={() => setModal(true)}>
+            <Plus className="h-4 w-4 mr-1.5" />Create your first group
+          </Button>
         </div>
       ) : (
-        <div className="grid gap-3">
+        <div className="grid gap-3 sm:grid-cols-2 lg:grid-cols-3">
           {groups.map((g) => <SplitGroupCard key={g.id} group={g} />)}
         </div>
       )}

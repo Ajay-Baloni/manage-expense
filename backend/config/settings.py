@@ -136,3 +136,17 @@ SIMPLE_JWT = {
 # CORS
 CORS_ALLOWED_ORIGINS = env('CORS_ALLOWED_ORIGINS')
 CORS_ALLOW_CREDENTIALS = True
+
+# Email
+# EMAIL_BACKEND accepts the friendly aliases "smtp"/"console" or a full dotted path.
+_email_backend = env('EMAIL_BACKEND', default='console')
+EMAIL_BACKEND = {
+    'smtp': 'django.core.mail.backends.smtp.EmailBackend',
+    'console': 'django.core.mail.backends.console.EmailBackend',
+}.get(_email_backend, _email_backend)
+EMAIL_HOST = env('EMAIL_HOST', default='')
+EMAIL_PORT = env.int('EMAIL_PORT', default=587)
+EMAIL_USE_TLS = env.bool('EMAIL_USE_TLS', default=True)
+EMAIL_HOST_USER = env('EMAIL_HOST_USER', default='')
+EMAIL_HOST_PASSWORD = env('EMAIL_HOST_PASSWORD', default='')
+DEFAULT_FROM_EMAIL = env('DEFAULT_FROM_EMAIL', default='FinTrack <no-reply@fintrack.local>')

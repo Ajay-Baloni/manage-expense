@@ -2,7 +2,7 @@ import { ArrowRight } from 'lucide-react'
 import { Card, CardContent, CardHeader, CardTitle } from './ui/card'
 import { formatCurrency } from '../lib/utils'
 
-export function BalanceSheet({ balances, onSettle }) {
+export function BalanceSheet({ balances, onSettle, currency = 'INR' }) {
   if (!balances) return null
 
   const { member_balances = [], suggested_settlements = [] } = balances
@@ -22,7 +22,7 @@ export function BalanceSheet({ balances, onSettle }) {
                 <div key={mb.member_id} className="flex items-center justify-between py-2 border-b border-border last:border-0">
                   <span className="text-sm font-medium">{mb.member_name}</span>
                   <span className={`text-sm font-semibold ${mb.balance >= 0 ? 'text-green-600' : 'text-red-600'}`}>
-                    {mb.balance >= 0 ? '+' : ''}{formatCurrency(mb.balance)}
+                    {mb.balance >= 0 ? '+' : ''}{formatCurrency(mb.balance, currency)}
                   </span>
                 </div>
               ))}
@@ -46,7 +46,7 @@ export function BalanceSheet({ balances, onSettle }) {
                     <span className="font-medium">{s.to_name}</span>
                   </div>
                   <div className="flex items-center gap-2">
-                    <span className="font-semibold text-sm">{formatCurrency(s.amount)}</span>
+                    <span className="font-semibold text-sm">{formatCurrency(s.amount, currency)}</span>
                     {onSettle && (
                       <button
                         onClick={() => onSettle(s)}

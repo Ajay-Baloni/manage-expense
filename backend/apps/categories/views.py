@@ -54,9 +54,8 @@ class BudgetViewSet(viewsets.ModelViewSet):
 
     @action(detail=False, methods=['get'])
     def current_month(self, request):
-        today = timezone.now().date()
-        from datetime import date
-        month_start = date(today.year, today.month, 1)
-        budgets = Budget.objects.filter(user=request.user, month=month_start).select_related('category')
+        # Budgets are recurring (weekly/monthly), so return them all; each is
+        # serialized with spend computed over its own current period.
+        budgets = Budget.objects.filter(user=request.user).select_related('category')
         serializer = self.get_serializer(budgets, many=True)
         return Response(serializer.data)

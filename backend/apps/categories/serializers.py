@@ -16,7 +16,7 @@ class CategorySerializer(serializers.ModelSerializer):
 class BudgetAlertSerializer(serializers.ModelSerializer):
     class Meta:
         model = BudgetAlert
-        fields = ['id', 'triggered_at', 'percentage_used']
+        fields = ['id', 'triggered_at', 'percentage_used', 'level']
 
 
 class BudgetSerializer(serializers.ModelSerializer):
@@ -26,28 +26,28 @@ class BudgetSerializer(serializers.ModelSerializer):
     alerts = BudgetAlertSerializer(many=True, read_only=True)
     spent_amount = serializers.SerializerMethodField()
     percentage_used = serializers.SerializerMethodField()
+    period_start = serializers.SerializerMethodField()
+    period_end = serializers.SerializerMethodField()
 
     class Meta:
         model = Budget
         fields = [
             'id', 'category', 'category_name', 'category_color', 'category_icon',
-            'month', 'limit_amount', 'alert_threshold',
-            'spent_amount', 'percentage_used', 'alerts',
+            'period', 'month', 'limit_amount', 'alert_threshold',
+            'spent_amount', 'percentage_used', 'period_start', 'period_end', 'alerts',
         ]
-        read_only_fields = ['id']
+        read_only_fields = ['id', 'month']
 
     def get_spent_amount(self, obj):
         from apps.transactions.models import Transaction
         from django.db.models import Sum
-        import calendar
-        month = obj.month
-        last_day = calendar.monthrange(month.year, month.month)[1]
+        start, end = obj.current_period_range()
         total = Transaction.objects.filter(
             user=obj.user,
             category=obj.category,
             type='expense',
-            date__gte=month,
-            date__lte=month.replace(day=last_day),
+            date__gte=start,
+            date__lte=end,
         ).aggregate(total=Sum('amount'))['total'] or 0
         return float(total)
 
@@ -56,6 +56,12 @@ class BudgetSerializer(serializers.ModelSerializer):
         if obj.limit_amount > 0:
             return round(float(spent) / float(obj.limit_amount) * 100, 2)
         return 0
+
+    def get_period_start(self, obj):
+        return obj.current_period_range()[0]
+
+    def get_period_end(self, obj):
+        return obj.current_period_range()[1]
 
     def create(self, validated_data):
         validated_data['user'] = self.context['request'].user

@@ -24,10 +24,11 @@ class UserSerializer(serializers.ModelSerializer):
 class RegisterSerializer(serializers.ModelSerializer):
     password = serializers.CharField(write_only=True, min_length=8)
     password_confirm = serializers.CharField(write_only=True)
+    currency = serializers.CharField(write_only=True, max_length=3, default='INR', required=False)
 
     class Meta:
         model = User
-        fields = ['email', 'first_name', 'last_name', 'password', 'password_confirm']
+        fields = ['email', 'first_name', 'last_name', 'password', 'password_confirm', 'currency']
 
     def validate(self, attrs):
         if attrs['password'] != attrs['password_confirm']:
@@ -36,8 +37,9 @@ class RegisterSerializer(serializers.ModelSerializer):
 
     def create(self, validated_data):
         validated_data.pop('password_confirm')
+        currency = validated_data.pop('currency', 'INR')
         user = User.objects.create_user(**validated_data)
-        UserProfile.objects.create(user=user)
+        UserProfile.objects.create(user=user, currency=currency)
         return user
 
 

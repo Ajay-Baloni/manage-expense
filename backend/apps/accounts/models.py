@@ -53,7 +53,7 @@ class UserProfile(models.Model):
 
     user = models.OneToOneField(User, on_delete=models.CASCADE, related_name='profile')
     avatar_url = models.URLField(blank=True)
-    currency = models.CharField(max_length=3, choices=CURRENCY_CHOICES, default='USD')
+    currency = models.CharField(max_length=3, choices=CURRENCY_CHOICES, default='INR')
     timezone = models.CharField(max_length=50, default='UTC')
     theme = models.CharField(max_length=10, choices=THEME_CHOICES, default='system')
     created_at = models.DateTimeField(auto_now_add=True)

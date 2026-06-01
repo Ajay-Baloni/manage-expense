@@ -2,6 +2,7 @@ import { useEffect, useState } from 'react'
 import { useParams, useNavigate } from 'react-router-dom'
 import { ArrowLeft, Plus, UserPlus, RefreshCw } from 'lucide-react'
 import { useSplitStore } from '../../store/splitStore'
+import { useAuthStore } from '../../store/authStore'
 import { BalanceSheet } from '../../components/BalanceSheet'
 import { Button } from '../../components/ui/button'
 import { Input } from '../../components/ui/input'
@@ -16,6 +17,8 @@ export default function SplitDetail() {
   const { id } = useParams()
   const navigate = useNavigate()
   const { currentGroup, expenses, balances, fetchGroup, fetchExpenses, fetchBalances, createExpense, deleteExpense, addMember, settle } = useSplitStore()
+  const { user } = useAuthStore()
+  const currency = user?.profile?.currency || 'INR'
 
   const [expenseModal, setExpenseModal] = useState(false)
   const [memberModal, setMemberModal] = useState(false)
@@ -60,7 +63,7 @@ export default function SplitDetail() {
   }
 
   const handleSettle = async (s) => {
-    if (!confirm(`Record settlement: ${s.from_name} pays ${s.to_name} ${formatCurrency(s.amount)}?`)) return
+    if (!confirm(`Record settlement: ${s.from_name} pays ${s.to_name} ${formatCurrency(s.amount, currency)}?`)) return
     try {
       await settle(id, {
         group: parseInt(id),
@@ -110,7 +113,7 @@ export default function SplitDetail() {
                       <p className="text-sm font-medium">{exp.description}</p>
                       <p className="text-xs text-muted-foreground">{formatDate(exp.date)} · paid by {exp.paid_by_name}</p>
                     </div>
-                    <span className="font-semibold text-sm">{formatCurrency(exp.amount)}</span>
+                    <span className="font-semibold text-sm">{formatCurrency(exp.amount, currency)}</span>
                   </div>
                 ))}
               </div>
@@ -119,7 +122,7 @@ export default function SplitDetail() {
         </Card>
 
         {/* Balances */}
-        <BalanceSheet balances={balances} onSettle={handleSettle} />
+        <BalanceSheet balances={balances} onSettle={handleSettle} currency={currency} />
       </div>
 
       {/* Add Expense Modal */}

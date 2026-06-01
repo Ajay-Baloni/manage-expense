@@ -8,18 +8,19 @@ import { Label } from '../../components/ui/label'
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '../../components/ui/select'
 import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogFooter } from '../../components/ui/dialog'
 import { Card, CardContent, CardHeader, CardTitle } from '../../components/ui/card'
+import { PageHeader } from '../../components/layout/PageHeader'
 import { BudgetProgressList } from '../../components/BudgetProgressBar'
 import { getErrorMessage } from '../../lib/utils'
 import toast from 'react-hot-toast'
 
 const EMPTY_CAT = { name: '', icon: 'tag', color: '#6366f1', type: 'both' }
-const EMPTY_BUDGET = { category: '', month: new Date().toISOString().slice(0, 7), limit_amount: '', alert_threshold: 80 }
+const EMPTY_BUDGET = { category: '', period: 'monthly', limit_amount: '', alert_threshold: 80 }
 
 export default function Categories() {
   const { categories, budgets, fetchCategories, createCategory, updateCategory, deleteCategory,
           createBudget, updateBudget, deleteBudget, fetchCurrentMonthBudgets } = useCategoryStore()
   const { user } = useAuthStore()
-  const currency = user?.profile?.currency || 'USD'
+  const currency = user?.profile?.currency || 'INR'
 
   const [catModal, setCatModal] = useState(false)
   const [budgetModal, setBudgetModal] = useState(false)
@@ -44,7 +45,7 @@ export default function Categories() {
     setEditingBudget(b)
     setBudgetForm(b ? {
       category: b.category.toString(),
-      month: b.month.slice(0, 7),
+      period: b.period || 'monthly',
       limit_amount: b.limit_amount,
       alert_threshold: b.alert_threshold,
     } : EMPTY_BUDGET)
@@ -69,11 +70,14 @@ export default function Categories() {
     try {
       const data = {
         ...budgetForm,
-        month: budgetForm.month + '-01',
         category: parseInt(budgetForm.category),
         limit_amount: parseFloat(budgetForm.limit_amount),
       }
-      if (editingBudget) await updateBudget(editingBudget.id, data)
+      // Upsert: only one budget is allowed per category+period, so if one
+      // already exists we update it instead of creating a duplicate.
+      const existing = editingBudget
+        || budgets.find((b) => b.category === data.category && b.period === data.period)
+      if (existing) await updateBudget(existing.id, data)
       else await createBudget(data)
       toast.success('Budget saved')
       setBudgetModal(false)
@@ -88,88 +92,67 @@ export default function Categories() {
     catch (err) { toast.error(getErrorMessage(err)) }
   }
 
+  const handleDeleteBudget = async (id) => {
+    if (!confirm('Delete this budget?')) return
+    try { await deleteBudget(id); toast.success('Budget deleted'); fetchCurrentMonthBudgets() }
+    catch (err) { toast.error(getErrorMessage(err)) }
+  }
+
   const expenseCategories = categories.filter((c) => c.type !== 'income')
   const incomeCategories = categories.filter((c) => c.type !== 'expense')
 
   return (
-    <div className="space-y-6">
-      <div className="flex justify-between items-center">
-        <h2 className="text-lg font-semibold">Manage Categories</h2>
-        <Button size="sm" onClick={() => openCatModal()}>
-          <Plus className="h-4 w-4 mr-2" />New Category
+    <div className="space-y-5">
+      <PageHeader
+        title="Categories"
+        description="Organize your transactions and set monthly budgets."
+      >
+        <Button size="sm" className="h-9" onClick={() => openCatModal()}>
+          <Plus className="h-4 w-4 mr-1.5" />New Category
         </Button>
-      </div>
+      </PageHeader>
 
-      <div className="grid md:grid-cols-2 gap-6">
-        {/* Expense categories */}
-        <Card>
-          <CardHeader className="pb-3">
-            <CardTitle className="text-base text-red-600">Expense Categories</CardTitle>
-          </CardHeader>
-          <CardContent className="space-y-2">
-            {expenseCategories.map((c) => (
-              <div key={c.id} className="flex items-center justify-between py-2 border-b border-border last:border-0">
-                <div className="flex items-center gap-2">
-                  <span className="inline-block w-3 h-3 rounded-full" style={{ backgroundColor: c.color }} />
-                  <span className="text-sm font-medium">{c.name}</span>
-                  {c.is_default && <span className="text-xs text-muted-foreground">(default)</span>}
-                </div>
-                {!c.is_default && (
-                  <div className="flex gap-1">
-                    <Button variant="ghost" size="icon" className="h-7 w-7" onClick={() => openCatModal(c)}>
-                      <Pencil className="h-3.5 w-3.5" />
-                    </Button>
-                    <Button variant="ghost" size="icon" className="h-7 w-7 text-destructive" onClick={() => handleDeleteCat(c.id)}>
-                      <Trash2 className="h-3.5 w-3.5" />
-                    </Button>
-                  </div>
-                )}
-              </div>
-            ))}
-          </CardContent>
-        </Card>
-
-        {/* Income categories */}
-        <Card>
-          <CardHeader className="pb-3">
-            <CardTitle className="text-base text-green-600">Income Categories</CardTitle>
-          </CardHeader>
-          <CardContent className="space-y-2">
-            {incomeCategories.map((c) => (
-              <div key={c.id} className="flex items-center justify-between py-2 border-b border-border last:border-0">
-                <div className="flex items-center gap-2">
-                  <span className="inline-block w-3 h-3 rounded-full" style={{ backgroundColor: c.color }} />
-                  <span className="text-sm font-medium">{c.name}</span>
-                  {c.is_default && <span className="text-xs text-muted-foreground">(default)</span>}
-                </div>
-                {!c.is_default && (
-                  <div className="flex gap-1">
-                    <Button variant="ghost" size="icon" className="h-7 w-7" onClick={() => openCatModal(c)}>
-                      <Pencil className="h-3.5 w-3.5" />
-                    </Button>
-                    <Button variant="ghost" size="icon" className="h-7 w-7 text-destructive" onClick={() => handleDeleteCat(c.id)}>
-                      <Trash2 className="h-3.5 w-3.5" />
-                    </Button>
-                  </div>
-                )}
-              </div>
-            ))}
-          </CardContent>
-        </Card>
+      <div className="grid md:grid-cols-2 gap-4">
+        <CategoryList
+          title="Expense Categories"
+          accent="bg-red-500"
+          categories={expenseCategories}
+          onEdit={openCatModal}
+          onDelete={handleDeleteCat}
+        />
+        <CategoryList
+          title="Income Categories"
+          accent="bg-emerald-500"
+          categories={incomeCategories}
+          onEdit={openCatModal}
+          onDelete={handleDeleteCat}
+        />
       </div>
 
       {/* Budgets */}
       <Card>
-        <CardHeader>
+        <CardHeader className="pb-4">
           <div className="flex justify-between items-center">
-            <CardTitle className="text-base">Monthly Budgets</CardTitle>
-            <Button size="sm" variant="outline" onClick={() => openBudgetModal()}>
-              <Target className="h-4 w-4 mr-2" />Set Budget
+            <CardTitle className="text-base font-semibold">Budgets</CardTitle>
+            <Button size="sm" variant="outline" className="h-9" onClick={() => openBudgetModal()}>
+              <Target className="h-4 w-4 mr-1.5" />Set Budget
             </Button>
           </div>
         </CardHeader>
         <CardContent>
-          <BudgetProgressList budgets={budgets} currency={currency} />
+          {budgets.length > 0 ? (
+            <BudgetProgressList
+              budgets={budgets}
+              currency={currency}
+              onEdit={openBudgetModal}
+              onDelete={handleDeleteBudget}
+            />
+          ) : (
+            <div className="flex flex-col items-center justify-center py-8 text-center">
+              <p className="text-sm font-medium text-foreground">No budgets yet</p>
+              <p className="text-sm text-muted-foreground mt-0.5">Set a budget to monitor your category spending.</p>
+            </div>
+          )}
         </CardContent>
       </Card>
 
@@ -225,8 +208,14 @@ export default function Categories() {
               </Select>
             </div>
             <div className="space-y-1">
-              <Label>Month</Label>
-              <Input type="month" value={budgetForm.month} onChange={(e) => setBudgetForm((f) => ({ ...f, month: e.target.value }))} required />
+              <Label>Period</Label>
+              <Select value={budgetForm.period} onValueChange={(v) => setBudgetForm((f) => ({ ...f, period: v }))}>
+                <SelectTrigger><SelectValue /></SelectTrigger>
+                <SelectContent>
+                  <SelectItem value="monthly">Monthly</SelectItem>
+                  <SelectItem value="weekly">Weekly</SelectItem>
+                </SelectContent>
+              </Select>
             </div>
             <div className="space-y-1">
               <Label>Budget Limit</Label>
@@ -244,5 +233,48 @@ export default function Categories() {
         </DialogContent>
       </Dialog>
     </div>
+  )
+}
+
+function CategoryList({ title, accent, categories, onEdit, onDelete }) {
+  return (
+    <Card>
+      <CardHeader className="pb-3">
+        <CardTitle className="text-sm font-semibold flex items-center gap-2">
+          <span className={`inline-block h-2 w-2 rounded-full ${accent}`} />
+          {title}
+          <span className="ml-auto text-xs font-normal text-muted-foreground">{categories.length}</span>
+        </CardTitle>
+      </CardHeader>
+      <CardContent className="pt-0">
+        {categories.length === 0 ? (
+          <p className="py-6 text-center text-sm text-muted-foreground">No categories</p>
+        ) : (
+          <div className="space-y-0.5">
+            {categories.map((c) => (
+              <div key={c.id} className="group flex items-center justify-between rounded-md px-2 py-2 hover:bg-accent transition-colors">
+                <div className="flex items-center gap-2.5">
+                  <span className="inline-block w-2.5 h-2.5 rounded-full flex-shrink-0" style={{ backgroundColor: c.color }} />
+                  <span className="text-sm font-medium">{c.name}</span>
+                  {c.is_default && (
+                    <span className="text-[10px] uppercase tracking-wide text-muted-foreground bg-muted px-1.5 py-0.5 rounded">default</span>
+                  )}
+                </div>
+                {!c.is_default && (
+                  <div className="flex gap-0.5 opacity-0 group-hover:opacity-100 transition-opacity">
+                    <Button variant="ghost" size="icon" className="h-7 w-7" onClick={() => onEdit(c)}>
+                      <Pencil className="h-3.5 w-3.5" />
+                    </Button>
+                    <Button variant="ghost" size="icon" className="h-7 w-7 text-destructive hover:text-destructive" onClick={() => onDelete(c.id)}>
+                      <Trash2 className="h-3.5 w-3.5" />
+                    </Button>
+                  </div>
+                )}
+              </div>
+            ))}
+          </div>
+        )}
+      </CardContent>
+    </Card>
   )
 }

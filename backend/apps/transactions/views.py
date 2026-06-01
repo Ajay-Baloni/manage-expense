@@ -41,7 +41,18 @@ class TransactionViewSet(viewsets.ModelViewSet):
         return Transaction.objects.filter(user=self.request.user).select_related('category').prefetch_related('tags')
 
     def perform_create(self, serializer):
-        serializer.save(user=self.request.user)
+        txn = serializer.save(user=self.request.user)
+        self._check_budget(txn)
+
+    def perform_update(self, serializer):
+        txn = serializer.save()
+        self._check_budget(txn)
+
+    def _check_budget(self, txn):
+        """After an expense changes, see if it crossed any budget threshold."""
+        if txn.type == 'expense' and txn.category_id:
+            from apps.categories.services import check_budget_thresholds
+            check_budget_thresholds(txn.user, txn.category)
 
     @action(detail=False, methods=['get'])
     def dashboard_summary(self, request):

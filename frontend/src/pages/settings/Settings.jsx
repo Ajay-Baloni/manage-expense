@@ -1,5 +1,6 @@
 import { useState } from 'react'
-import { useAuthStore } from '../../store/authStore'
+import { useSelector, useDispatch } from 'react-redux'
+import { selectUser, updateUser as updateUserAction } from '../../store/authSlice'
 import { useTheme } from '../../context/ThemeContext'
 import { authApi } from '../../api/auth'
 import { Button } from '../../components/ui/button'
@@ -33,7 +34,9 @@ const TIMEZONES = [
 ]
 
 export default function Settings() {
-  const { user, updateUser } = useAuthStore()
+  const dispatch = useDispatch()
+  const user = useSelector(selectUser)
+  const updateUser = (data) => dispatch(updateUserAction(data))
   const { setTheme } = useTheme()
 
   const [profileForm, setProfileForm] = useState({

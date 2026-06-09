@@ -1,40 +1,4 @@
-# Virtual environment
-venv/
-env/
-
-# Environment variables
+node_modules/
 .env
-.env.*
-!.env.example
-
-# Python
-__pycache__/
-*.py[cod]
-*.pyo
-*.pyd
-*.so
-*.egg
-*.egg-info/
-dist/
-build/
-.eggs/
-.pytest_cache/
-.mypy_cache/
-.ruff_cache/
-
-# Django
-*.sqlite3
-staticfiles/
-mediafiles/
-media/
-
-# Logs
+uploads/
 *.log
-
-# Editor / OS
-.vscode/
-.idea/
-*.swp
-*.swo
-.DS_Store
-Thumbs.db

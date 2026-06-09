@@ -1,8 +1,13 @@
 import { useEffect, useState } from 'react'
 import { useParams, useNavigate } from 'react-router-dom'
 import { ArrowLeft, Plus, UserPlus, RefreshCw } from 'lucide-react'
-import { useSplitStore } from '../../store/splitStore'
-import { useAuthStore } from '../../store/authStore'
+import { useSelector, useDispatch } from 'react-redux'
+import {
+  fetchGroup as fetchGroupAction, fetchExpenses as fetchExpensesAction,
+  fetchBalances as fetchBalancesAction, createExpense as createExpenseAction,
+  deleteExpense as deleteExpenseAction, addMember as addMemberAction, settle as settleAction
+} from '../../store/splitsSlice'
+import { selectUser } from '../../store/authSlice'
 import { BalanceSheet } from '../../components/BalanceSheet'
 import { Button } from '../../components/ui/button'
 import { Input } from '../../components/ui/input'
@@ -16,8 +21,18 @@ import toast from 'react-hot-toast'
 export default function SplitDetail() {
   const { id } = useParams()
   const navigate = useNavigate()
-  const { currentGroup, expenses, balances, fetchGroup, fetchExpenses, fetchBalances, createExpense, deleteExpense, addMember, settle } = useSplitStore()
-  const { user } = useAuthStore()
+  const dispatch = useDispatch()
+  const currentGroup = useSelector((s) => s.splits.currentGroup)
+  const expenses = useSelector((s) => s.splits.expenses)
+  const balances = useSelector((s) => s.splits.balances)
+  const fetchGroup = (gid) => dispatch(fetchGroupAction(gid))
+  const fetchExpenses = (gid) => dispatch(fetchExpensesAction(gid))
+  const fetchBalances = (gid) => dispatch(fetchBalancesAction(gid))
+  const createExpense = (data) => dispatch(createExpenseAction(data)).unwrap()
+  const deleteExpense = (eid) => dispatch(deleteExpenseAction(eid)).unwrap()
+  const addMember = (groupId, data) => dispatch(addMemberAction({ groupId, data })).unwrap()
+  const settle = (groupId, data) => dispatch(settleAction({ groupId, data })).unwrap()
+  const user = useSelector(selectUser)
   const currency = user?.profile?.currency || 'INR'
 
   const [expenseModal, setExpenseModal] = useState(false)

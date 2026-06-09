@@ -1,7 +1,13 @@
 import { useEffect, useState } from 'react'
 import { Plus, Pencil, Trash2, Target } from 'lucide-react'
-import { useCategoryStore } from '../../store/categoryStore'
-import { useAuthStore } from '../../store/authStore'
+import { useSelector, useDispatch } from 'react-redux'
+import {
+  fetchCategories as fetchCategoriesAction, createCategory as createCategoryAction,
+  updateCategory as updateCategoryAction, deleteCategory as deleteCategoryAction,
+  createBudget as createBudgetAction, updateBudget as updateBudgetAction,
+  deleteBudget as deleteBudgetAction, fetchCurrentMonthBudgets as fetchCurrentMonthBudgetsAction
+} from '../../store/categoriesSlice'
+import { selectUser } from '../../store/authSlice'
 import { Button } from '../../components/ui/button'
 import { Input } from '../../components/ui/input'
 import { Label } from '../../components/ui/label'
@@ -17,9 +23,18 @@ const EMPTY_CAT = { name: '', icon: 'tag', color: '#6366f1', type: 'both' }
 const EMPTY_BUDGET = { category: '', period: 'monthly', limit_amount: '', alert_threshold: 80 }
 
 export default function Categories() {
-  const { categories, budgets, fetchCategories, createCategory, updateCategory, deleteCategory,
-          createBudget, updateBudget, deleteBudget, fetchCurrentMonthBudgets } = useCategoryStore()
-  const { user } = useAuthStore()
+  const dispatch = useDispatch()
+  const categories = useSelector((s) => s.categories.categories)
+  const budgets = useSelector((s) => s.categories.budgets)
+  const fetchCategories = () => dispatch(fetchCategoriesAction())
+  const createCategory = (data) => dispatch(createCategoryAction(data)).unwrap()
+  const updateCategory = (id, data) => dispatch(updateCategoryAction({ id, data })).unwrap()
+  const deleteCategory = (id) => dispatch(deleteCategoryAction(id)).unwrap()
+  const createBudget = (data) => dispatch(createBudgetAction(data)).unwrap()
+  const updateBudget = (id, data) => dispatch(updateBudgetAction({ id, data })).unwrap()
+  const deleteBudget = (id) => dispatch(deleteBudgetAction(id)).unwrap()
+  const fetchCurrentMonthBudgets = () => dispatch(fetchCurrentMonthBudgetsAction())
+  const user = useSelector(selectUser)
   const currency = user?.profile?.currency || 'INR'
 
   const [catModal, setCatModal] = useState(false)

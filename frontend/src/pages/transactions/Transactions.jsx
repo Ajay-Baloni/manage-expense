@@ -1,8 +1,12 @@
 import { useEffect, useState } from 'react'
 import { Plus, Search, SlidersHorizontal, X, ChevronLeft, ChevronRight } from 'lucide-react'
-import { useTransactionStore } from '../../store/transactionStore'
-import { useCategoryStore } from '../../store/categoryStore'
-import { useAuthStore } from '../../store/authStore'
+import { useSelector, useDispatch } from 'react-redux'
+import {
+  fetchTransactions as fetchTransactionsAction,
+  deleteTransaction as deleteTransactionAction, setFilters as setFiltersAction
+} from '../../store/transactionsSlice'
+import { fetchCategories as fetchCategoriesAction } from '../../store/categoriesSlice'
+import { selectUser } from '../../store/authSlice'
 import { DataTable } from '../../components/DataTable'
 import { TransactionModal } from '../../components/TransactionModal'
 import { PageHeader } from '../../components/layout/PageHeader'
@@ -18,9 +22,17 @@ import toast from 'react-hot-toast'
 const FILTER_FIELDS = ['type', 'category', 'date_from', 'date_to', 'amount_min', 'amount_max']
 
 export default function Transactions({ defaultType = '', title, description }) {
-  const { transactions, filters, pagination, loading, fetchTransactions, setFilters, deleteTransaction } = useTransactionStore()
-  const { categories, fetchCategories } = useCategoryStore()
-  const { user } = useAuthStore()
+  const dispatch = useDispatch()
+  const transactions = useSelector((s) => s.transactions.transactions)
+  const filters = useSelector((s) => s.transactions.filters)
+  const pagination = useSelector((s) => s.transactions.pagination)
+  const loading = useSelector((s) => s.transactions.loading)
+  const fetchTransactions = (params) => dispatch(fetchTransactionsAction(params))
+  const setFilters = (payload) => dispatch(setFiltersAction(payload))
+  const deleteTransaction = (id) => dispatch(deleteTransactionAction(id)).unwrap()
+  const categories = useSelector((s) => s.categories.categories)
+  const fetchCategories = () => dispatch(fetchCategoriesAction())
+  const user = useSelector(selectUser)
   const currency = user?.profile?.currency || 'INR'
 
   const [modalOpen, setModalOpen] = useState(false)

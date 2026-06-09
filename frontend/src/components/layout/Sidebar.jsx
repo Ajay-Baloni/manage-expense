@@ -3,8 +3,9 @@ import {
   LayoutDashboard, ArrowUpDown, Tag, Users, FileText,
   Settings, LogOut, TrendingUp, X, BarChart2, Sun, Moon, Monitor
 } from 'lucide-react'
-import { useAuthStore } from '../../store/authStore'
-import { useUiStore } from '../../store/uiStore'
+import { useSelector, useDispatch } from 'react-redux'
+import { selectUser, logout as logoutAction } from '../../store/authSlice'
+import { toggleSidebar as toggleSidebarAction } from '../../store/uiSlice'
 import { useTheme } from '../../context/ThemeContext'
 import { cn } from '../../lib/utils'
 import toast from 'react-hot-toast'
@@ -20,8 +21,10 @@ const navItems = [
 ]
 
 export function Sidebar() {
-  const { logout, user } = useAuthStore()
-  const { sidebarOpen, toggleSidebar } = useUiStore()
+  const dispatch = useDispatch()
+  const user = useSelector(selectUser)
+  const sidebarOpen = useSelector((s) => s.ui.sidebarOpen)
+  const toggleSidebar = () => dispatch(toggleSidebarAction())
   const { theme, setTheme } = useTheme()
   const navigate = useNavigate()
 
@@ -32,7 +35,7 @@ export function Sidebar() {
   const ThemeIcon = theme === 'light' ? Sun : theme === 'dark' ? Moon : Monitor
 
   const handleLogout = async () => {
-    await logout()
+    await dispatch(logoutAction())
     toast.success('Logged out')
     navigate('/auth/login')
   }

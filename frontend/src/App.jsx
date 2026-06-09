@@ -1,7 +1,8 @@
 import { BrowserRouter, Routes, Route, Navigate } from 'react-router-dom'
 import { Toaster } from 'react-hot-toast'
+import { useSelector } from 'react-redux'
 import { ThemeProvider } from './context/ThemeContext'
-import { useAuthStore } from './store/authStore'
+import { selectIsAuthenticated } from './store/authSlice'
 
 import { AppLayout } from './components/layout/AppLayout'
 import { AuthLayout } from './components/layout/AuthLayout'
@@ -19,13 +20,13 @@ import Reports from './pages/reports/Reports'
 import Settings from './pages/settings/Settings'
 
 function ProtectedRoute({ children }) {
-  const { isAuthenticated } = useAuthStore()
+  const isAuthenticated = useSelector(selectIsAuthenticated)
   if (!isAuthenticated) return <Navigate to="/auth/login" replace />
   return children
 }
 
 function PublicRoute({ children }) {
-  const { isAuthenticated } = useAuthStore()
+  const isAuthenticated = useSelector(selectIsAuthenticated)
   if (isAuthenticated) return <Navigate to="/" replace />
   return children
 }

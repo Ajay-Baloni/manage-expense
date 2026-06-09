@@ -5,6 +5,8 @@ import { Button } from '../../components/ui/button'
 import { Input } from '../../components/ui/input'
 import { Label } from '../../components/ui/label'
 import { Card, CardContent, CardHeader, CardTitle } from '../../components/ui/card'
+import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '../../components/ui/select'
+import { PageHeader } from '../../components/layout/PageHeader'
 import { getErrorMessage } from '../../lib/utils'
 import toast from 'react-hot-toast'
 
@@ -65,8 +67,12 @@ export default function Reports() {
   }
 
   return (
-    <div className="space-y-6">
-      <div className="grid md:grid-cols-2 gap-6">
+    <div className="space-y-5">
+      <PageHeader
+        title="Reports"
+        description="Import transactions from CSV and export your data."
+      />
+      <div className="grid md:grid-cols-2 gap-4">
         {/* Import */}
         <Card>
           <CardHeader>
@@ -109,25 +115,27 @@ export default function Reports() {
           </CardHeader>
           <CardContent className="space-y-4">
             <div className="space-y-3">
-              <div className="space-y-1">
-                <Label>From Date</Label>
-                <Input type="date" value={exportFilters.date_from} onChange={(e) => setExportFilters((f) => ({ ...f, date_from: e.target.value }))} />
+              <div className="space-y-1.5">
+                <Label className="text-sm font-medium">From Date</Label>
+                <Input type="date" className="h-9" value={exportFilters.date_from} onChange={(e) => setExportFilters((f) => ({ ...f, date_from: e.target.value }))} />
               </div>
-              <div className="space-y-1">
-                <Label>To Date</Label>
-                <Input type="date" value={exportFilters.date_to} onChange={(e) => setExportFilters((f) => ({ ...f, date_to: e.target.value }))} />
+              <div className="space-y-1.5">
+                <Label className="text-sm font-medium">To Date</Label>
+                <Input type="date" className="h-9" value={exportFilters.date_to} onChange={(e) => setExportFilters((f) => ({ ...f, date_to: e.target.value }))} />
               </div>
-              <div className="space-y-1">
-                <Label>Type</Label>
-                <select
-                  className="flex h-10 w-full rounded-md border border-input bg-background px-3 py-2 text-sm"
-                  value={exportFilters.type}
-                  onChange={(e) => setExportFilters((f) => ({ ...f, type: e.target.value }))}
+              <div className="space-y-1.5">
+                <Label className="text-sm font-medium">Type</Label>
+                <Select
+                  value={exportFilters.type || 'all'}
+                  onValueChange={(v) => setExportFilters((f) => ({ ...f, type: v === 'all' ? '' : v }))}
                 >
-                  <option value="">All</option>
-                  <option value="income">Income</option>
-                  <option value="expense">Expense</option>
-                </select>
+                  <SelectTrigger className="h-9"><SelectValue /></SelectTrigger>
+                  <SelectContent>
+                    <SelectItem value="all">All</SelectItem>
+                    <SelectItem value="income">Income</SelectItem>
+                    <SelectItem value="expense">Expense</SelectItem>
+                  </SelectContent>
+                </Select>
               </div>
             </div>
             <div className="flex gap-2">
@@ -155,7 +163,7 @@ export default function Reports() {
                     <p className="text-xs text-muted-foreground">{new Date(job.created_at).toLocaleString()}</p>
                   </div>
                   <div className="text-right">
-                    <span className={`inline-block px-2 py-0.5 rounded text-xs font-medium ${job.status === 'completed' ? 'bg-green-100 text-green-800' : job.status === 'failed' ? 'bg-red-100 text-red-800' : 'bg-yellow-100 text-yellow-800'}`}>
+                    <span className={`inline-block px-2 py-0.5 rounded text-xs font-medium ${job.status === 'completed' ? 'bg-emerald-100 text-emerald-700 dark:bg-emerald-900/30 dark:text-emerald-400' : job.status === 'failed' ? 'bg-red-100 text-red-700 dark:bg-red-900/30 dark:text-red-400' : 'bg-amber-100 text-amber-700 dark:bg-amber-900/30 dark:text-amber-400'}`}>
                       {job.status}
                     </span>
                     <p className="text-xs text-muted-foreground mt-0.5">{job.imported_rows}/{job.total_rows} imported</p>

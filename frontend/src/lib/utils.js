@@ -5,12 +5,28 @@ export function cn(...inputs) {
   return twMerge(clsx(inputs))
 }
 
-export function formatCurrency(amount, currency = 'USD') {
-  return new Intl.NumberFormat('en-US', {
+export function formatCurrency(amount, currency = 'INR') {
+  return new Intl.NumberFormat('en-IN', {
     style: 'currency',
     currency,
     minimumFractionDigits: 2,
   }).format(amount)
+}
+
+// Compact form for chart axes, e.g. ₹1.2k, $3.4M
+export function formatCompactCurrency(amount, currency = 'INR') {
+  return new Intl.NumberFormat('en-IN', {
+    style: 'currency',
+    currency,
+    notation: 'compact',
+    maximumFractionDigits: 1,
+  }).format(amount)
+}
+
+// Just the currency symbol for the active currency, e.g. ₹, $, €
+export function currencySymbol(currency = 'INR') {
+  const parts = new Intl.NumberFormat('en-IN', { style: 'currency', currency }).formatToParts(0)
+  return parts.find((p) => p.type === 'currency')?.value || ''
 }
 
 export function formatDate(dateStr) {

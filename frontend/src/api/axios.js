@@ -16,6 +16,13 @@ api.interceptors.request.use((config) => {
   return config
 })
 
+// Clear only auth-related storage on session loss, preserving UI prefs (theme, etc.)
+function clearAuthStorage() {
+  localStorage.removeItem('access_token')
+  localStorage.removeItem('refresh_token')
+  localStorage.removeItem('auth-storage')
+}
+
 // Response interceptor: auto-refresh on 401
 let isRefreshing = false
 let failedQueue = []
@@ -49,7 +56,7 @@ api.interceptors.response.use(
       const refresh = localStorage.getItem('refresh_token')
       if (!refresh) {
         isRefreshing = false
-        localStorage.clear()
+        clearAuthStorage()
         window.location.href = '/auth/login'
         return Promise.reject(error)
       }
@@ -66,7 +73,7 @@ api.interceptors.response.use(
         return api(originalRequest)
       } catch (err) {
         processQueue(err, null)
-        localStorage.clear()
+        clearAuthStorage()
         window.location.href = '/auth/login'
         return Promise.reject(err)
       } finally {

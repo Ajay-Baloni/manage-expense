@@ -1,15 +1,13 @@
 import { useEffect, useState } from 'react'
 import { useParams, useNavigate } from 'react-router-dom'
-import { useSelector, useDispatch } from 'react-redux'
 import { ArrowLeft, Plus, UserPlus, RefreshCw } from 'lucide-react'
+import { useSelector, useDispatch } from 'react-redux'
 import {
-  fetchGroup,
-  fetchExpenses,
-  fetchBalances,
-  createExpense,
-  addMember,
-  settle,
+  fetchGroup as fetchGroupAction, fetchExpenses as fetchExpensesAction,
+  fetchBalances as fetchBalancesAction, createExpense as createExpenseAction,
+  deleteExpense as deleteExpenseAction, addMember as addMemberAction, settle as settleAction
 } from '../../store/splitsSlice'
+import { selectUser } from '../../store/authSlice'
 import { BalanceSheet } from '../../components/BalanceSheet'
 import { Button } from '../../components/ui/button'
 import { Input } from '../../components/ui/input'
@@ -27,6 +25,15 @@ export default function SplitDetail() {
   const currentGroup = useSelector((s) => s.splits.currentGroup)
   const expenses = useSelector((s) => s.splits.expenses)
   const balances = useSelector((s) => s.splits.balances)
+  const fetchGroup = (gid) => dispatch(fetchGroupAction(gid))
+  const fetchExpenses = (gid) => dispatch(fetchExpensesAction(gid))
+  const fetchBalances = (gid) => dispatch(fetchBalancesAction(gid))
+  const createExpense = (data) => dispatch(createExpenseAction(data)).unwrap()
+  const deleteExpense = (eid) => dispatch(deleteExpenseAction(eid)).unwrap()
+  const addMember = (groupId, data) => dispatch(addMemberAction({ groupId, data })).unwrap()
+  const settle = (groupId, data) => dispatch(settleAction({ groupId, data })).unwrap()
+  const user = useSelector(selectUser)
+  const currency = user?.profile?.currency || 'INR'
 
   const [expenseModal, setExpenseModal] = useState(false)
   const [memberModal, setMemberModal] = useState(false)
@@ -35,25 +42,25 @@ export default function SplitDetail() {
   const [memberForm, setMemberForm] = useState({ type: 'guest', name: '', email: '' })
 
   useEffect(() => {
-    dispatch(fetchGroup(id))
-    dispatch(fetchExpenses(id))
-    dispatch(fetchBalances(id))
-  }, [id, dispatch])
+    fetchGroup(id)
+    fetchExpenses(id)
+    fetchBalances(id)
+  }, [id])
 
   const handleAddExpense = async (e) => {
     e.preventDefault()
     setLoading(true)
     try {
-      await dispatch(createExpense({
+      await createExpense({
         group: parseInt(id),
         amount: parseFloat(expForm.amount),
         description: expForm.description,
         date: expForm.date,
         split_type: expForm.split_type,
-      })).unwrap()
+      })
       toast.success('Expense added')
       setExpenseModal(false)
-      dispatch(fetchBalances(id))
+      fetchBalances(id)
     } catch (err) { toast.error(getErrorMessage(err)) }
     finally { setLoading(false) }
   }
@@ -62,25 +69,25 @@ export default function SplitDetail() {
     e.preventDefault()
     setLoading(true)
     try {
-      await dispatch(addMember({ groupId: id, data: { guest_user: { name: memberForm.name, email: memberForm.email } } })).unwrap()
+      await addMember(id, { guest_user: { name: memberForm.name, email: memberForm.email } })
       toast.success('Member added')
       setMemberModal(false)
-      dispatch(fetchBalances(id))
+      fetchBalances(id)
     } catch (err) { toast.error(getErrorMessage(err)) }
     finally { setLoading(false) }
   }
 
   const handleSettle = async (s) => {
-    if (!confirm(`Record settlement: ${s.from_name} pays ${s.to_name} ${formatCurrency(s.amount)}?`)) return
+    if (!confirm(`Record settlement: ${s.from_name} pays ${s.to_name} ${formatCurrency(s.amount, currency)}?`)) return
     try {
-      await dispatch(settle({ groupId: id, data: {
+      await settle(id, {
         group: parseInt(id),
         payer_member: s.from_member,
         receiver_member: s.to_member,
         amount: s.amount,
-      } })).unwrap()
+      })
       toast.success('Settlement recorded')
-      dispatch(fetchBalances(id))
+      fetchBalances(id)
     } catch (err) { toast.error(getErrorMessage(err)) }
   }
 
@@ -121,7 +128,7 @@ export default function SplitDetail() {
                       <p className="text-sm font-medium">{exp.description}</p>
                       <p className="text-xs text-muted-foreground">{formatDate(exp.date)} · paid by {exp.paid_by_name}</p>
                     </div>
-                    <span className="font-semibold text-sm">{formatCurrency(exp.amount)}</span>
+                    <span className="font-semibold text-sm">{formatCurrency(exp.amount, currency)}</span>
                   </div>
                 ))}
               </div>
@@ -130,7 +137,7 @@ export default function SplitDetail() {
         </Card>
 
         {/* Balances */}
-        <BalanceSheet balances={balances} onSettle={handleSettle} />
+        <BalanceSheet balances={balances} onSettle={handleSettle} currency={currency} />
       </div>
 
       {/* Add Expense Modal */}

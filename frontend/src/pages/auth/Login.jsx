@@ -29,14 +29,15 @@ export default function Login() {
   }
 
   return (
-    <div className="space-y-6">
-      <div>
-        <h2 className="text-2xl font-bold">Sign in</h2>
-        <p className="text-muted-foreground text-sm mt-1">Enter your credentials to access your account</p>
+    <div className="space-y-5">
+      <div className="space-y-1">
+        <h2 className="text-xl font-semibold">Welcome back</h2>
+        <p className="text-muted-foreground text-sm">Sign in to your account to continue</p>
       </div>
+
       <form onSubmit={handleSubmit} className="space-y-4">
-        <div className="space-y-1">
-          <Label htmlFor="email">Email</Label>
+        <div className="space-y-1.5">
+          <Label htmlFor="email" className="text-sm font-medium">Email</Label>
           <Input
             id="email"
             type="email"
@@ -44,10 +45,16 @@ export default function Login() {
             value={form.email}
             onChange={(e) => setForm((f) => ({ ...f, email: e.target.value }))}
             required
+            className="h-9"
           />
         </div>
-        <div className="space-y-1">
-          <Label htmlFor="password">Password</Label>
+        <div className="space-y-1.5">
+          <div className="flex items-center justify-between">
+            <Label htmlFor="password" className="text-sm font-medium">Password</Label>
+            <Link to="/auth/forgot-password" className="text-xs text-primary hover:underline">
+              Forgot password?
+            </Link>
+          </div>
           <Input
             id="password"
             type="password"
@@ -55,30 +62,30 @@ export default function Login() {
             value={form.password}
             onChange={(e) => setForm((f) => ({ ...f, password: e.target.value }))}
             required
+            className="h-9"
           />
         </div>
-        <div className="flex items-center justify-between">
-          <label className="flex items-center gap-2 text-sm cursor-pointer">
-            <input
-              type="checkbox"
-              checked={form.remember_me}
-              onChange={(e) => setForm((f) => ({ ...f, remember_me: e.target.checked }))}
-              className="rounded border-input"
-            />
-            Remember me (30 days)
+        <div className="flex items-center gap-2">
+          <input
+            id="remember"
+            type="checkbox"
+            checked={form.remember_me}
+            onChange={(e) => setForm((f) => ({ ...f, remember_me: e.target.checked }))}
+            className="h-3.5 w-3.5 rounded border-input cursor-pointer"
+          />
+          <label htmlFor="remember" className="text-sm text-muted-foreground cursor-pointer">
+            Remember me for 30 days
           </label>
-          <Link to="/auth/forgot-password" className="text-sm text-primary hover:underline">
-            Forgot password?
-          </Link>
         </div>
-        <Button type="submit" className="w-full" disabled={loading}>
-          {loading ? 'Signing in...' : 'Sign in'}
+        <Button type="submit" className="w-full h-9" disabled={loading}>
+          {loading ? 'Signing in…' : 'Sign in'}
         </Button>
       </form>
+
       <p className="text-center text-sm text-muted-foreground">
         Don't have an account?{' '}
         <Link to="/auth/register" className="text-primary hover:underline font-medium">
-          Sign up
+          Create account
         </Link>
       </p>
     </div>

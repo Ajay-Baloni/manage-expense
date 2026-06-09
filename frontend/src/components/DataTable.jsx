@@ -4,7 +4,7 @@ import { Button } from './ui/button'
 import { Badge } from './ui/badge'
 import { formatCurrency, formatDate, cn } from '../lib/utils'
 
-export function DataTable({ transactions = [], onEdit, onDelete, currency = 'USD', loading = false }) {
+export function DataTable({ transactions = [], onEdit, onDelete, currency = 'INR', loading = false }) {
   const [sortField, setSortField] = useState('date')
   const [sortDir, setSortDir] = useState('desc')
 

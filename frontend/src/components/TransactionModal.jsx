@@ -59,8 +59,18 @@ export function TransactionModal({ open, onClose, transaction = null }) {
         amount: parseFloat(form.amount),
         category: form.category ? parseInt(form.category) : null,
       }
-      if (!data.amount || isNaN(data.amount)) {
-        toast.error('Please enter a valid amount')
+      if (!data.amount || isNaN(data.amount) || data.amount <= 0) {
+        toast.error('Please enter a valid amount greater than 0')
+        setLoading(false)
+        return
+      }
+      if (!form.category) {
+        toast.error('Please select a category')
+        setLoading(false)
+        return
+      }
+      if (!form.description.trim()) {
+        toast.error('Please enter a description')
         setLoading(false)
         return
       }
@@ -123,7 +133,7 @@ export function TransactionModal({ open, onClose, transaction = null }) {
 
           {/* Category */}
           <div className="space-y-1">
-            <Label>Category</Label>
+            <Label>Category <span className="text-destructive">*</span></Label>
             <Select value={form.category} onValueChange={(v) => setForm((f) => ({ ...f, category: v }))}>
               <SelectTrigger>
                 <SelectValue placeholder="Select category" />

@@ -3,8 +3,9 @@ import {
   LayoutDashboard, ArrowUpDown, Tag, Users, FileText,
   Settings, LogOut, TrendingUp, Menu, X, DollarSign
 } from 'lucide-react'
-import { useAuthStore } from '../../store/authStore'
-import { useUiStore } from '../../store/uiStore'
+import { useSelector, useDispatch } from 'react-redux'
+import { selectUser, logout } from '../../store/authSlice'
+import { toggleSidebar } from '../../store/uiSlice'
 import { cn } from '../../lib/utils'
 import toast from 'react-hot-toast'
 
@@ -19,12 +20,13 @@ const navItems = [
 ]
 
 export function Sidebar() {
-  const { logout, user } = useAuthStore()
-  const { sidebarOpen, toggleSidebar } = useUiStore()
+  const dispatch = useDispatch()
+  const user = useSelector(selectUser)
+  const sidebarOpen = useSelector((s) => s.ui.sidebarOpen)
   const navigate = useNavigate()
 
   const handleLogout = async () => {
-    await logout()
+    await dispatch(logout())
     toast.success('Logged out')
     navigate('/auth/login')
   }
@@ -35,7 +37,7 @@ export function Sidebar() {
       {sidebarOpen && (
         <div
           className="fixed inset-0 z-20 bg-black/50 lg:hidden"
-          onClick={toggleSidebar}
+          onClick={() => dispatch(toggleSidebar())}
         />
       )}
 
@@ -53,7 +55,7 @@ export function Sidebar() {
             <DollarSign className="h-6 w-6 text-primary" />
             <span className="font-bold text-lg">ExpenseManager</span>
           </div>
-          <button onClick={toggleSidebar} className="lg:hidden p-1 rounded hover:bg-accent">
+          <button onClick={() => dispatch(toggleSidebar())} className="lg:hidden p-1 rounded hover:bg-accent">
             <X className="h-5 w-5" />
           </button>
         </div>
@@ -73,7 +75,7 @@ export function Sidebar() {
                     : 'text-muted-foreground hover:bg-accent hover:text-accent-foreground'
                 )
               }
-              onClick={() => window.innerWidth < 1024 && toggleSidebar()}
+              onClick={() => window.innerWidth < 1024 && dispatch(toggleSidebar())}
             >
               <Icon className="h-4 w-4 flex-shrink-0" />
               {label}

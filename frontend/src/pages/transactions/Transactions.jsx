@@ -1,8 +1,14 @@
 import { useEffect, useState } from 'react'
+import { useSelector, useDispatch } from 'react-redux'
 import { Plus, Search, Filter, X, ChevronLeft, ChevronRight } from 'lucide-react'
-import { useTransactionStore } from '../../store/transactionStore'
-import { useCategoryStore } from '../../store/categoryStore'
-import { useAuthStore } from '../../store/authStore'
+import {
+  fetchTransactions,
+  setFilters,
+  resetFilters,
+  deleteTransaction,
+} from '../../store/transactionsSlice'
+import { fetchCategories } from '../../store/categoriesSlice'
+import { selectUser } from '../../store/authSlice'
 import { DataTable } from '../../components/DataTable'
 import { TransactionModal } from '../../components/TransactionModal'
 import { Button } from '../../components/ui/button'
@@ -13,9 +19,10 @@ import { getErrorMessage } from '../../lib/utils'
 import toast from 'react-hot-toast'
 
 export default function Transactions({ defaultType = '' }) {
-  const { transactions, filters, pagination, loading, fetchTransactions, setFilters, resetFilters, deleteTransaction } = useTransactionStore()
-  const { categories, fetchCategories } = useCategoryStore()
-  const { user } = useAuthStore()
+  const dispatch = useDispatch()
+  const { transactions, filters, pagination, loading } = useSelector((s) => s.transactions)
+  const categories = useSelector((s) => s.categories.categories)
+  const user = useSelector(selectUser)
   const currency = user?.profile?.currency || 'USD'
 
   const [modalOpen, setModalOpen] = useState(false)
@@ -23,18 +30,18 @@ export default function Transactions({ defaultType = '' }) {
   const [showFilters, setShowFilters] = useState(false)
 
   useEffect(() => {
-    fetchCategories()
-    if (defaultType) setFilters({ type: defaultType })
-  }, [defaultType])
+    dispatch(fetchCategories())
+    if (defaultType) dispatch(setFilters({ type: defaultType }))
+  }, [defaultType, dispatch])
 
   useEffect(() => {
-    fetchTransactions(defaultType ? { type: defaultType } : {})
-  }, [filters])
+    dispatch(fetchTransactions(defaultType ? { type: defaultType } : {}))
+  }, [filters, defaultType, dispatch])
 
   const handleDelete = async (id) => {
     if (!confirm('Delete this transaction?')) return
     try {
-      await deleteTransaction(id)
+      await dispatch(deleteTransaction(id)).unwrap()
       toast.success('Transaction deleted')
     } catch (err) {
       toast.error(getErrorMessage(err))
@@ -43,7 +50,7 @@ export default function Transactions({ defaultType = '' }) {
 
   const handleEdit = (t) => { setEditing(t); setModalOpen(true) }
   const handleAdd = () => { setEditing(null); setModalOpen(true) }
-  const handleClose = () => { setModalOpen(false); setEditing(null); fetchTransactions() }
+  const handleClose = () => { setModalOpen(false); setEditing(null); dispatch(fetchTransactions()) }
 
   const totalPages = Math.ceil(pagination.count / 20)
 
@@ -57,7 +64,7 @@ export default function Transactions({ defaultType = '' }) {
             placeholder="Search transactions..."
             className="pl-9"
             value={filters.search}
-            onChange={(e) => setFilters({ search: e.target.value })}
+            onChange={(e) => dispatch(setFilters({ search: e.target.value }))}
           />
         </div>
         <Button variant="outline" size="sm" onClick={() => setShowFilters((v) => !v)}>
@@ -75,7 +82,7 @@ export default function Transactions({ defaultType = '' }) {
         <Card className="p-4">
           <div className="grid grid-cols-2 md:grid-cols-4 gap-3">
             {!defaultType && (
-              <Select value={filters.type || 'all'} onValueChange={(v) => setFilters({ type: v === 'all' ? '' : v })}>
+              <Select value={filters.type || 'all'} onValueChange={(v) => dispatch(setFilters({ type: v === 'all' ? '' : v }))}>
                 <SelectTrigger><SelectValue placeholder="All Types" /></SelectTrigger>
                 <SelectContent>
                   <SelectItem value="all">All Types</SelectItem>
@@ -84,7 +91,7 @@ export default function Transactions({ defaultType = '' }) {
                 </SelectContent>
               </Select>
             )}
-            <Select value={filters.category || 'all'} onValueChange={(v) => setFilters({ category: v === 'all' ? '' : v })}>
+            <Select value={filters.category || 'all'} onValueChange={(v) => dispatch(setFilters({ category: v === 'all' ? '' : v }))}>
               <SelectTrigger><SelectValue placeholder="All Categories" /></SelectTrigger>
               <SelectContent>
                 <SelectItem value="all">All Categories</SelectItem>
@@ -93,11 +100,11 @@ export default function Transactions({ defaultType = '' }) {
                 ))}
               </SelectContent>
             </Select>
-            <Input type="date" placeholder="From" value={filters.date_from} onChange={(e) => setFilters({ date_from: e.target.value })} />
-            <Input type="date" placeholder="To" value={filters.date_to} onChange={(e) => setFilters({ date_to: e.target.value })} />
-            <Input type="number" placeholder="Min amount" value={filters.amount_min} onChange={(e) => setFilters({ amount_min: e.target.value })} />
-            <Input type="number" placeholder="Max amount" value={filters.amount_max} onChange={(e) => setFilters({ amount_max: e.target.value })} />
-            <Button variant="outline" size="sm" onClick={resetFilters}>
+            <Input type="date" placeholder="From" value={filters.date_from} onChange={(e) => dispatch(setFilters({ date_from: e.target.value }))} />
+            <Input type="date" placeholder="To" value={filters.date_to} onChange={(e) => dispatch(setFilters({ date_to: e.target.value }))} />
+            <Input type="number" placeholder="Min amount" value={filters.amount_min} onChange={(e) => dispatch(setFilters({ amount_min: e.target.value }))} />
+            <Input type="number" placeholder="Max amount" value={filters.amount_max} onChange={(e) => dispatch(setFilters({ amount_max: e.target.value }))} />
+            <Button variant="outline" size="sm" onClick={() => dispatch(resetFilters())}>
               <X className="h-4 w-4 mr-2" />Clear
             </Button>
           </div>
@@ -120,11 +127,11 @@ export default function Transactions({ defaultType = '' }) {
               Showing {((filters.page - 1) * 20) + 1}–{Math.min(filters.page * 20, pagination.count)} of {pagination.count}
             </p>
             <div className="flex items-center gap-2">
-              <Button variant="outline" size="sm" disabled={!pagination.previous} onClick={() => setFilters({ page: filters.page - 1 })}>
+              <Button variant="outline" size="sm" disabled={!pagination.previous} onClick={() => dispatch(setFilters({ page: filters.page - 1 }))}>
                 <ChevronLeft className="h-4 w-4" />
               </Button>
               <span className="text-sm">{filters.page} / {totalPages}</span>
-              <Button variant="outline" size="sm" disabled={!pagination.next} onClick={() => setFilters({ page: filters.page + 1 })}>
+              <Button variant="outline" size="sm" disabled={!pagination.next} onClick={() => dispatch(setFilters({ page: filters.page + 1 }))}>
                 <ChevronRight className="h-4 w-4" />
               </Button>
             </div>

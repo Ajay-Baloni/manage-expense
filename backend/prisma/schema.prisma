@@ -1,0 +1,291 @@
+generator client {
+  provider = "prisma-client-js"
+}
+
+datasource db {
+  provider = "postgresql"
+  url      = env("DATABASE_URL")
+}
+
+model User {
+  id         Int      @id @default(autoincrement())
+  email      String   @unique
+  firstName  String   @default("")
+  lastName   String   @default("")
+  password   String
+  isActive   Boolean  @default(true)
+  isStaff    Boolean  @default(false)
+  dateJoined DateTime @default(now())
+
+  profile             UserProfile?
+  transactions        Transaction[]
+  tags                Tag[]
+  categories          Category[]
+  budgets             Budget[]
+  recurringRules      RecurringRule[]
+  refreshTokens       RefreshToken[]
+  passwordResetTokens PasswordResetToken[]
+  importJobs          ImportJob[]
+  createdGroups       SplitGroup[]        @relation("GroupCreator")
+  groupMemberships    SplitGroupMember[]
+  paidExpenses        SplitExpense[]      @relation("ExpensePaidByUser")
+}
+
+model UserProfile {
+  id        Int      @id @default(autoincrement())
+  userId    Int      @unique
+  avatarUrl String   @default("")
+  currency  String   @default("USD")
+  timezone  String   @default("UTC")
+  theme     String   @default("system")
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
+
+  user User @relation(fields: [userId], references: [id], onDelete: Cascade)
+}
+
+model PasswordResetToken {
+  id        Int      @id @default(autoincrement())
+  userId    Int
+  token     String   @unique @default(uuid())
+  createdAt DateTime @default(now())
+  expiresAt DateTime
+  isUsed    Boolean  @default(false)
+
+  user User @relation(fields: [userId], references: [id], onDelete: Cascade)
+
+  @@index([userId])
+}
+
+model RefreshToken {
+  id        Int      @id @default(autoincrement())
+  userId    Int
+  token     String   @unique
+  expiresAt DateTime
+  createdAt DateTime @default(now())
+
+  user User @relation(fields: [userId], references: [id], onDelete: Cascade)
+
+  @@index([token])
+  @@index([userId])
+}
+
+model Category {
+  id        Int      @id @default(autoincrement())
+  userId    Int?
+  name      String
+  icon      String   @default("tag")
+  color     String   @default("#6366f1")
+  type      String   @default("both")
+  isDefault Boolean  @default(false)
+  createdAt DateTime @default(now())
+
+  user           User?           @relation(fields: [userId], references: [id], onDelete: Cascade)
+  transactions   Transaction[]
+  recurringRules RecurringRule[]
+  budgets        Budget[]
+
+  @@index([userId])
+}
+
+model Tag {
+  id     Int    @id @default(autoincrement())
+  userId Int
+  name   String
+  color  String @default("#6366f1")
+
+  user            User             @relation(fields: [userId], references: [id], onDelete: Cascade)
+  transactionTags TransactionTag[]
+
+  @@unique([userId, name])
+  @@index([userId])
+}
+
+model Transaction {
+  id          Int      @id @default(autoincrement())
+  userId      Int
+  type        String
+  amount      Decimal  @db.Decimal(12, 2)
+  categoryId  Int?
+  date        DateTime @db.Date
+  description String
+  receiptUrl  String   @default("")
+  receiptFile String?
+  notes       String   @default("")
+  createdAt   DateTime @default(now())
+  updatedAt   DateTime @updatedAt
+
+  user     User             @relation(fields: [userId], references: [id], onDelete: Cascade)
+  category Category?        @relation(fields: [categoryId], references: [id], onDelete: SetNull)
+  tags     TransactionTag[]
+
+  @@index([userId, date])
+  @@index([userId, type])
+  @@index([userId, categoryId])
+}
+
+model TransactionTag {
+  id            Int @id @default(autoincrement())
+  transactionId Int
+  tagId         Int
+
+  transaction Transaction @relation(fields: [transactionId], references: [id], onDelete: Cascade)
+  tag         Tag         @relation(fields: [tagId], references: [id], onDelete: Cascade)
+
+  @@unique([transactionId, tagId])
+  @@index([transactionId])
+  @@index([tagId])
+}
+
+model RecurringRule {
+  id          Int       @id @default(autoincrement())
+  userId      Int
+  type        String
+  amount      Decimal   @db.Decimal(12, 2)
+  categoryId  Int?
+  description String
+  frequency   String
+  startDate   DateTime  @db.Date
+  nextRun     DateTime  @db.Date
+  endDate     DateTime? @db.Date
+  isActive    Boolean   @default(true)
+  createdAt   DateTime  @default(now())
+
+  user     User      @relation(fields: [userId], references: [id], onDelete: Cascade)
+  category Category? @relation(fields: [categoryId], references: [id], onDelete: SetNull)
+
+  @@index([userId])
+}
+
+model Budget {
+  id             Int      @id @default(autoincrement())
+  userId         Int
+  categoryId     Int
+  month          DateTime @db.Date
+  limitAmount    Decimal  @db.Decimal(12, 2)
+  alertThreshold Int      @default(80)
+
+  user     User          @relation(fields: [userId], references: [id], onDelete: Cascade)
+  category Category      @relation(fields: [categoryId], references: [id], onDelete: Cascade)
+  alerts   BudgetAlert[]
+
+  @@unique([userId, categoryId, month])
+  @@index([userId])
+}
+
+model BudgetAlert {
+  id             Int      @id @default(autoincrement())
+  budgetId       Int
+  triggeredAt    DateTime @default(now())
+  percentageUsed Decimal  @db.Decimal(5, 2)
+
+  budget Budget @relation(fields: [budgetId], references: [id], onDelete: Cascade)
+
+  @@index([budgetId])
+}
+
+model SplitGroup {
+  id          Int      @id @default(autoincrement())
+  name        String
+  createdById Int
+  createdAt   DateTime @default(now())
+
+  createdBy User               @relation("GroupCreator", fields: [createdById], references: [id], onDelete: Cascade)
+  members   SplitGroupMember[]
+  expenses  SplitExpense[]
+  settlements SplitSettlement[]
+
+  @@index([createdById])
+}
+
+model GuestUser {
+  id    Int    @id @default(autoincrement())
+  name  String
+  email String @default("")
+
+  memberships  SplitGroupMember[]
+  paidExpenses SplitExpense[]     @relation("ExpensePaidByGuest")
+}
+
+model SplitGroupMember {
+  id          Int      @id @default(autoincrement())
+  groupId     Int
+  userId      Int?
+  guestUserId Int?
+  joinedAt    DateTime @default(now())
+
+  group     SplitGroup @relation(fields: [groupId], references: [id], onDelete: Cascade)
+  user      User?      @relation(fields: [userId], references: [id], onDelete: Cascade)
+  guestUser GuestUser? @relation(fields: [guestUserId], references: [id], onDelete: Cascade)
+
+  shares             SplitExpenseShare[]
+  paidSettlements    SplitSettlement[]   @relation("SettlementPayer")
+  receivedSettlements SplitSettlement[]  @relation("SettlementReceiver")
+
+  @@index([groupId])
+}
+
+model SplitExpense {
+  id            Int      @id @default(autoincrement())
+  groupId       Int
+  paidByUserId  Int?
+  paidByGuestId Int?
+  amount        Decimal  @db.Decimal(12, 2)
+  description   String
+  date          DateTime @db.Date
+  splitType     String   @default("equal")
+  createdAt     DateTime @default(now())
+
+  group       SplitGroup @relation(fields: [groupId], references: [id], onDelete: Cascade)
+  paidByUser  User?      @relation("ExpensePaidByUser", fields: [paidByUserId], references: [id], onDelete: SetNull)
+  paidByGuest GuestUser? @relation("ExpensePaidByGuest", fields: [paidByGuestId], references: [id], onDelete: SetNull)
+  shares      SplitExpenseShare[]
+
+  @@index([groupId])
+}
+
+model SplitExpenseShare {
+  id          Int     @id @default(autoincrement())
+  expenseId   Int
+  memberId    Int
+  shareAmount Decimal @db.Decimal(12, 2)
+  isSettled   Boolean @default(false)
+
+  expense SplitExpense     @relation(fields: [expenseId], references: [id], onDelete: Cascade)
+  member  SplitGroupMember @relation(fields: [memberId], references: [id], onDelete: Cascade)
+
+  @@index([expenseId])
+  @@index([memberId])
+}
+
+model SplitSettlement {
+  id               Int      @id @default(autoincrement())
+  groupId          Int
+  payerMemberId    Int
+  receiverMemberId Int
+  amount           Decimal  @db.Decimal(12, 2)
+  settledAt        DateTime @default(now())
+  note             String   @default("")
+
+  group    SplitGroup       @relation(fields: [groupId], references: [id], onDelete: Cascade)
+  payer    SplitGroupMember @relation("SettlementPayer", fields: [payerMemberId], references: [id], onDelete: Cascade)
+  receiver SplitGroupMember @relation("SettlementReceiver", fields: [receiverMemberId], references: [id], onDelete: Cascade)
+
+  @@index([groupId])
+}
+
+model ImportJob {
+  id           Int      @id @default(autoincrement())
+  userId       Int
+  fileName     String
+  status       String   @default("pending")
+  totalRows    Int      @default(0)
+  importedRows Int      @default(0)
+  errorsJson   Json     @default("[]")
+  createdAt    DateTime @default(now())
+  updatedAt    DateTime @updatedAt
+
+  user User @relation(fields: [userId], references: [id], onDelete: Cascade)
+
+  @@index([userId])
+}

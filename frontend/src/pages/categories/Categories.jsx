@@ -1,7 +1,17 @@
 import { useEffect, useState } from 'react'
+import { useSelector, useDispatch } from 'react-redux'
 import { Plus, Pencil, Trash2, Target } from 'lucide-react'
-import { useCategoryStore } from '../../store/categoryStore'
-import { useAuthStore } from '../../store/authStore'
+import {
+  fetchCategories,
+  createCategory,
+  updateCategory,
+  deleteCategory,
+  createBudget,
+  updateBudget,
+  deleteBudget,
+  fetchCurrentMonthBudgets,
+} from '../../store/categoriesSlice'
+import { selectUser } from '../../store/authSlice'
 import { Button } from '../../components/ui/button'
 import { Input } from '../../components/ui/input'
 import { Label } from '../../components/ui/label'
@@ -16,9 +26,10 @@ const EMPTY_CAT = { name: '', icon: 'tag', color: '#6366f1', type: 'both' }
 const EMPTY_BUDGET = { category: '', month: new Date().toISOString().slice(0, 7), limit_amount: '', alert_threshold: 80 }
 
 export default function Categories() {
-  const { categories, budgets, fetchCategories, createCategory, updateCategory, deleteCategory,
-          createBudget, updateBudget, deleteBudget, fetchCurrentMonthBudgets } = useCategoryStore()
-  const { user } = useAuthStore()
+  const dispatch = useDispatch()
+  const categories = useSelector((s) => s.categories.categories)
+  const budgets = useSelector((s) => s.categories.budgets)
+  const user = useSelector(selectUser)
   const currency = user?.profile?.currency || 'USD'
 
   const [catModal, setCatModal] = useState(false)
@@ -30,9 +41,9 @@ export default function Categories() {
   const [loading, setLoading] = useState(false)
 
   useEffect(() => {
-    fetchCategories()
-    fetchCurrentMonthBudgets()
-  }, [])
+    dispatch(fetchCategories())
+    dispatch(fetchCurrentMonthBudgets())
+  }, [dispatch])
 
   const openCatModal = (cat = null) => {
     setEditingCat(cat)
@@ -55,8 +66,8 @@ export default function Categories() {
     e.preventDefault()
     setLoading(true)
     try {
-      if (editingCat) await updateCategory(editingCat.id, catForm)
-      else await createCategory(catForm)
+      if (editingCat) await dispatch(updateCategory({ id: editingCat.id, data: catForm })).unwrap()
+      else await dispatch(createCategory(catForm)).unwrap()
       toast.success(editingCat ? 'Category updated' : 'Category created')
       setCatModal(false)
     } catch (err) { toast.error(getErrorMessage(err)) }
@@ -73,18 +84,18 @@ export default function Categories() {
         category: parseInt(budgetForm.category),
         limit_amount: parseFloat(budgetForm.limit_amount),
       }
-      if (editingBudget) await updateBudget(editingBudget.id, data)
-      else await createBudget(data)
+      if (editingBudget) await dispatch(updateBudget({ id: editingBudget.id, data })).unwrap()
+      else await dispatch(createBudget(data)).unwrap()
       toast.success('Budget saved')
       setBudgetModal(false)
-      fetchCurrentMonthBudgets()
+      dispatch(fetchCurrentMonthBudgets())
     } catch (err) { toast.error(getErrorMessage(err)) }
     finally { setLoading(false) }
   }
 
   const handleDeleteCat = async (id) => {
     if (!confirm('Delete this category?')) return
-    try { await deleteCategory(id); toast.success('Deleted') }
+    try { await dispatch(deleteCategory(id)).unwrap(); toast.success('Deleted') }
     catch (err) { toast.error(getErrorMessage(err)) }
   }
 

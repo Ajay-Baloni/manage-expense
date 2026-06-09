@@ -1,0 +1,29 @@
+# Dependencies
+node_modules/
+**/node_modules/
+
+# Env files
+.env
+**/.env
+!**/.env.example
+
+# Build output
+frontend/dist/
+backend/dist/
+
+# Uploads & generated files
+backend/uploads/
+*.log
+
+# Prisma
+backend/prisma/*.db
+
+# OS / editor
+.DS_Store
+.vscode/
+.idea/
+
+# Python (legacy, in case any venv lingers)
+venv/
+__pycache__/
+*.pyc

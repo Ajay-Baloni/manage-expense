@@ -1,7 +1,15 @@
 import { useEffect, useState } from 'react'
 import { useParams, useNavigate } from 'react-router-dom'
+import { useSelector, useDispatch } from 'react-redux'
 import { ArrowLeft, Plus, UserPlus, RefreshCw } from 'lucide-react'
-import { useSplitStore } from '../../store/splitStore'
+import {
+  fetchGroup,
+  fetchExpenses,
+  fetchBalances,
+  createExpense,
+  addMember,
+  settle,
+} from '../../store/splitsSlice'
 import { BalanceSheet } from '../../components/BalanceSheet'
 import { Button } from '../../components/ui/button'
 import { Input } from '../../components/ui/input'
@@ -15,7 +23,10 @@ import toast from 'react-hot-toast'
 export default function SplitDetail() {
   const { id } = useParams()
   const navigate = useNavigate()
-  const { currentGroup, expenses, balances, fetchGroup, fetchExpenses, fetchBalances, createExpense, deleteExpense, addMember, settle } = useSplitStore()
+  const dispatch = useDispatch()
+  const currentGroup = useSelector((s) => s.splits.currentGroup)
+  const expenses = useSelector((s) => s.splits.expenses)
+  const balances = useSelector((s) => s.splits.balances)
 
   const [expenseModal, setExpenseModal] = useState(false)
   const [memberModal, setMemberModal] = useState(false)
@@ -24,25 +35,25 @@ export default function SplitDetail() {
   const [memberForm, setMemberForm] = useState({ type: 'guest', name: '', email: '' })
 
   useEffect(() => {
-    fetchGroup(id)
-    fetchExpenses(id)
-    fetchBalances(id)
-  }, [id])
+    dispatch(fetchGroup(id))
+    dispatch(fetchExpenses(id))
+    dispatch(fetchBalances(id))
+  }, [id, dispatch])
 
   const handleAddExpense = async (e) => {
     e.preventDefault()
     setLoading(true)
     try {
-      await createExpense({
+      await dispatch(createExpense({
         group: parseInt(id),
         amount: parseFloat(expForm.amount),
         description: expForm.description,
         date: expForm.date,
         split_type: expForm.split_type,
-      })
+      })).unwrap()
       toast.success('Expense added')
       setExpenseModal(false)
-      fetchBalances(id)
+      dispatch(fetchBalances(id))
     } catch (err) { toast.error(getErrorMessage(err)) }
     finally { setLoading(false) }
   }
@@ -51,10 +62,10 @@ export default function SplitDetail() {
     e.preventDefault()
     setLoading(true)
     try {
-      await addMember(id, { guest_user: { name: memberForm.name, email: memberForm.email } })
+      await dispatch(addMember({ groupId: id, data: { guest_user: { name: memberForm.name, email: memberForm.email } } })).unwrap()
       toast.success('Member added')
       setMemberModal(false)
-      fetchBalances(id)
+      dispatch(fetchBalances(id))
     } catch (err) { toast.error(getErrorMessage(err)) }
     finally { setLoading(false) }
   }
@@ -62,14 +73,14 @@ export default function SplitDetail() {
   const handleSettle = async (s) => {
     if (!confirm(`Record settlement: ${s.from_name} pays ${s.to_name} ${formatCurrency(s.amount)}?`)) return
     try {
-      await settle(id, {
+      await dispatch(settle({ groupId: id, data: {
         group: parseInt(id),
         payer_member: s.from_member,
         receiver_member: s.to_member,
         amount: s.amount,
-      })
+      } })).unwrap()
       toast.success('Settlement recorded')
-      fetchBalances(id)
+      dispatch(fetchBalances(id))
     } catch (err) { toast.error(getErrorMessage(err)) }
   }
 

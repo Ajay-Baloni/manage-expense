@@ -1,6 +1,7 @@
 import { useEffect, useState } from 'react'
+import { useSelector, useDispatch } from 'react-redux'
 import { Plus } from 'lucide-react'
-import { useSplitStore } from '../../store/splitStore'
+import { fetchGroups, createGroup } from '../../store/splitsSlice'
 import { SplitGroupCard } from '../../components/SplitGroupCard'
 import { Button } from '../../components/ui/button'
 import { Input } from '../../components/ui/input'
@@ -10,18 +11,19 @@ import { getErrorMessage } from '../../lib/utils'
 import toast from 'react-hot-toast'
 
 export default function Splits() {
-  const { groups, fetchGroups, createGroup } = useSplitStore()
+  const dispatch = useDispatch()
+  const groups = useSelector((s) => s.splits.groups)
   const [modal, setModal] = useState(false)
   const [name, setName] = useState('')
   const [loading, setLoading] = useState(false)
 
-  useEffect(() => { fetchGroups() }, [])
+  useEffect(() => { dispatch(fetchGroups()) }, [dispatch])
 
   const handleCreate = async (e) => {
     e.preventDefault()
     setLoading(true)
     try {
-      await createGroup({ name })
+      await dispatch(createGroup({ name })).unwrap()
       toast.success('Group created')
       setModal(false)
       setName('')

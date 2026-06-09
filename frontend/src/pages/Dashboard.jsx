@@ -1,8 +1,9 @@
 import { useEffect } from 'react'
+import { useSelector, useDispatch } from 'react-redux'
 import { TrendingUp, TrendingDown, DollarSign, Wallet } from 'lucide-react'
-import { useTransactionStore } from '../store/transactionStore'
-import { useCategoryStore } from '../store/categoryStore'
-import { useAuthStore } from '../store/authStore'
+import { fetchSummary } from '../store/transactionsSlice'
+import { fetchCurrentMonthBudgets } from '../store/categoriesSlice'
+import { selectUser } from '../store/authSlice'
 import { SummaryCard } from '../components/SummaryCard'
 import { SpendingChart } from '../components/SpendingChart'
 import { CategoryPieChart } from '../components/CategoryPieChart'
@@ -10,15 +11,16 @@ import { BudgetProgressList } from '../components/BudgetProgressBar'
 import { Card, CardContent, CardHeader, CardTitle } from '../components/ui/card'
 
 export default function Dashboard() {
-  const { summary, fetchSummary } = useTransactionStore()
-  const { budgets, fetchCurrentMonthBudgets } = useCategoryStore()
-  const { user } = useAuthStore()
+  const dispatch = useDispatch()
+  const summary = useSelector((s) => s.transactions.summary)
+  const budgets = useSelector((s) => s.categories.budgets)
+  const user = useSelector(selectUser)
   const currency = user?.profile?.currency || 'USD'
 
   useEffect(() => {
-    fetchSummary()
-    fetchCurrentMonthBudgets()
-  }, [])
+    dispatch(fetchSummary())
+    dispatch(fetchCurrentMonthBudgets())
+  }, [dispatch])
 
   return (
     <div className="space-y-6">

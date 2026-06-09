@@ -2,7 +2,7 @@
 
 A full-stack personal finance manager with expense/income tracking, bill splitting (Splitwise-style), visual charts, import/export, and dark/light/system theme.
 
-**Stack:** React 18 + Vite · Django 4 + DRF · PostgreSQL · JWT Auth
+**Stack:** React 18 + Vite + Redux Toolkit · Node.js + Express + Prisma · PostgreSQL · JWT Auth
 
 ---
 
@@ -30,14 +30,13 @@ A full-stack personal finance manager with expense/income tracking, bill splitti
 
 Make sure you have these installed:
 
-- **Python** 3.10+
-- **Node.js** 18+
+- **Node.js** 18+ (both frontend and backend run on Node)
 - **PostgreSQL** 14+
-- **pip** and **npm**
+- **npm**
 
 ---
 
-## ⚙️ Backend Setup (Django)
+## ⚙️ Backend Setup (Node.js + Express + Prisma)
 
 ### 1. Navigate to backend
 
@@ -45,28 +44,13 @@ Make sure you have these installed:
 cd backend
 ```
 
-### 2. Create a virtual environment
+### 2. Install dependencies
 
 ```bash
-python -m venv venv
-
-# Activate it:
-# On Mac/Linux:
-source venv/bin/activate
-
-# On Windows:
-venv\Scripts\activate
+npm install
 ```
 
-### 3. Install dependencies
-
-```bash
-pip install -r requirements.txt
-```
-
-### 4. Create the `.env` file
-
-Create a file called `.env` inside the `backend/` folder:
+### 3. Create the `.env` file
 
 ```bash
 cp .env.example .env
@@ -75,83 +59,77 @@ cp .env.example .env
 Then open `.env` and fill in your values:
 
 ```env
-# Django
-SECRET_KEY=any-long-random-string-here
-DEBUG=True
-ALLOWED_HOSTS=localhost,127.0.0.1
+# PostgreSQL connection string
+DATABASE_URL=postgresql://postgres:your_postgres_password@localhost:5432/expense_manager
 
-# PostgreSQL Database
-DB_NAME=expense_manager
-DB_USER=postgres
-DB_PASSWORD=your_postgres_password
-DB_HOST=localhost
-DB_PORT=5432
+# Server
+PORT=8000
+
+# JWT
+JWT_SECRET=any-long-random-string-here
+JWT_ACCESS_EXPIRES_MIN=15
+JWT_REFRESH_EXPIRES_DAYS=7
+JWT_REFRESH_REMEMBER_DAYS=30
 
 # CORS — allow frontend to talk to backend
-CORS_ALLOWED_ORIGINS=http://localhost:5173,http://localhost:3000
-
-# JWT token lifetimes
-JWT_ACCESS_TOKEN_LIFETIME_MINUTES=15
-JWT_REFRESH_TOKEN_LIFETIME_DAYS=7
-
-# File uploads
-MEDIA_ROOT=media/
+CORS_ORIGINS=http://localhost:5173,http://localhost:3000
 ```
 
-> **SECRET_KEY tip:** Generate one by running:
+> **JWT_SECRET tip:** Generate a strong secret with:
 > ```bash
-> python -c "from django.core.management.utils import get_random_secret_key; print(get_random_secret_key())"
+> node -e "console.log(require('crypto').randomBytes(48).toString('hex'))"
 > ```
 
-### 5. Create the PostgreSQL database
+### 4. Create the PostgreSQL database
 
 Open your PostgreSQL shell (`psql`) and run:
 
 ```sql
 CREATE DATABASE expense_manager;
-CREATE USER postgres WITH PASSWORD 'your_postgres_password';
-GRANT ALL PRIVILEGES ON DATABASE expense_manager TO postgres;
 ```
 
-Or if you already have a postgres superuser, just create the DB:
+Or from the terminal:
 
 ```bash
 createdb expense_manager
 ```
 
-### 6. Run migrations
+Make sure the username/password in your `DATABASE_URL` matches your Postgres setup.
+
+### 5. Run Prisma migrations (creates all tables)
 
 ```bash
-python manage.py makemigrations accounts transactions categories splits reports
-python manage.py migrate
+npx prisma migrate dev --name init
 ```
 
-### 7. Seed default categories
+This reads `prisma/schema.prisma` and creates all 16 tables. It also generates the Prisma client.
+
+> If you only want to generate the client without migrating: `npm run prisma:generate`
+
+### 6. Seed default categories
 
 ```bash
-python manage.py create_default_categories
+npm run seed
 ```
 
-This creates 17 default categories (Food, Transport, Shopping, etc.) available to all users.
+This creates the 17 default categories (Food, Transport, Shopping, etc.) shared by all users.
 
-### 8. Create a superuser (optional, for admin panel)
+### 7. Start the backend server
 
 ```bash
-python manage.py createsuperuser
+# Development (auto-restarts on file changes)
+npm run dev
+
+# Production
+npm start
 ```
 
-### 9. Start the backend server
-
-```bash
-python manage.py runserver
-```
-
-Backend runs at: **http://localhost:8000**  
-Admin panel at: **http://localhost:8000/admin**
+Backend runs at: **http://localhost:8000**
+Health check: **http://localhost:8000/api/health**
 
 ---
 
-## 🎨 Frontend Setup (React)
+## 🎨 Frontend Setup (React + Redux Toolkit)
 
 ### 1. Navigate to frontend
 
@@ -187,51 +165,66 @@ Frontend runs at: **http://localhost:5173**
 
 ```
 manage-expense/
-├── backend/
-│   ├── manage.py
-│   ├── requirements.txt
-│   ├── .env                    ← you create this
-│   ├── .env.example            ← template
-│   ├── config/
-│   │   ├── settings.py
-│   │   ├── urls.py
-│   │   └── wsgi.py
-│   └── apps/
-│       ├── accounts/           ← auth, user profile
-│       ├── transactions/       ← income & expenses
-│       ├── categories/         ← categories & budgets
-│       ├── splits/             ← bill splitting
-│       └── reports/            ← import & export
+├── backend/                      # Node.js + Express + Prisma
+│   ├── package.json
+│   ├── .env                      ← you create this
+│   ├── .env.example              ← template
+│   ├── prisma/
+│   │   └── schema.prisma         ← all 16 database models
+│   └── src/
+│       ├── server.js             ← entry point
+│       ├── app.js                ← express app + middleware
+│       ├── config/               ← prisma client
+│       ├── middleware/           ← auth (JWT), error handler
+│       ├── utils/                ← jwt, password, pagination, serialize
+│       ├── controllers/          ← auth, transaction, category, split, report
+│       ├── routes/               ← route definitions (mounted under /api)
+│       └── seed/                 ← default categories seeder
 │
-└── frontend/
+└── frontend/                     # React + Vite + Redux Toolkit
     ├── package.json
-    ├── .env                    ← you create this
+    ├── .env                      ← you create this
     ├── vite.config.js
     └── src/
-        ├── pages/              ← all route pages
-        ├── components/         ← reusable UI components
-        ├── store/              ← Zustand state management
-        ├── api/                ← Axios API calls
-        └── context/            ← Theme context
+        ├── pages/                ← all route pages
+        ├── components/           ← reusable UI components
+        ├── store/                ← Redux Toolkit slices + store
+        │   ├── index.js          ← configureStore + redux-persist
+        │   ├── authSlice.js
+        │   ├── transactionsSlice.js
+        │   ├── categoriesSlice.js
+        │   ├── splitsSlice.js
+        │   └── uiSlice.js
+        ├── api/                  ← Axios API calls (with JWT refresh)
+        └── context/              ← Theme context
 ```
 
 ---
 
 ## 🔌 API Endpoints Reference
 
+All endpoints are prefixed with `/api`. Protected routes require `Authorization: Bearer <access_token>`.
+
 | Method | Endpoint | Description |
 |---|---|---|
 | POST | `/api/auth/register/` | Register new user |
-| POST | `/api/auth/login/` | Login (returns JWT tokens) |
-| POST | `/api/auth/logout/` | Logout |
-| POST | `/api/auth/token/refresh/` | Refresh access token |
+| POST | `/api/auth/login/` | Login (returns JWT tokens; `remember_me` sets 30-day cookie) |
+| POST | `/api/auth/logout/` | Logout (revokes refresh token) |
+| POST | `/api/auth/refresh/` | Refresh access token |
 | GET/PUT | `/api/auth/profile/` | Get / update profile |
+| POST | `/api/auth/change-password/` | Change password |
 | GET/POST | `/api/transactions/` | List / create transactions |
 | GET | `/api/transactions/dashboard_summary/` | Dashboard stats |
+| GET/POST | `/api/transactions/tags/` | List / create tags |
+| GET/POST | `/api/transactions/recurring/` | Recurring rules |
 | GET/POST | `/api/categories/` | List / create categories |
-| GET/POST | `/api/budgets/` | List / create budgets |
+| GET/POST | `/api/categories/budgets/` | List / create budgets |
+| GET | `/api/categories/budgets/current_month/` | Current month budgets |
 | GET/POST | `/api/splits/groups/` | List / create split groups |
+| POST | `/api/splits/groups/:id/add_member/` | Add a member (user or guest) |
 | GET | `/api/splits/groups/:id/balances/` | Who owes whom |
+| POST | `/api/splits/groups/:id/settle/` | Record a settlement |
+| GET/POST | `/api/splits/expenses/` | List / create split expenses |
 | POST | `/api/reports/import/csv/` | Import CSV |
 | GET | `/api/reports/export/csv/` | Export CSV |
 | GET | `/api/reports/export/pdf/` | Export PDF |
@@ -245,7 +238,7 @@ manage-expense/
 | Service | Purpose | Cost |
 |---|---|---|
 | **Vercel** | React frontend | Free |
-| **Railway** | Django backend | Free tier / ~$5/mo |
+| **Railway** | Node/Express backend | Free tier / ~$5/mo |
 | **Railway** | PostgreSQL database | Included |
 | **Cloudflare R2** | Receipt image storage | Free up to 10GB |
 
@@ -265,15 +258,17 @@ VITE_API_URL=https://your-backend.railway.app/api
 ### Deploy Backend to Railway
 
 1. Go to **railway.app** → New Project → Deploy from GitHub
-2. Select the `backend/` folder
-3. Add a PostgreSQL plugin
-4. Set environment variables (same as your `.env` but with production values):
-   - `DEBUG=False`
-   - `SECRET_KEY=your-production-secret`
-   - `DB_NAME`, `DB_USER`, `DB_PASSWORD`, `DB_HOST`, `DB_PORT` (Railway provides these)
-   - `ALLOWED_HOSTS=your-backend.railway.app`
-   - `CORS_ALLOWED_ORIGINS=https://your-frontend.vercel.app`
-5. Add start command: `gunicorn config.wsgi:application --bind 0.0.0.0:$PORT`
+2. Set the root directory to `backend/`
+3. Add a **PostgreSQL** plugin — Railway provides a `DATABASE_URL` automatically
+4. Set environment variables:
+   - `DATABASE_URL` (provided by the Railway Postgres plugin)
+   - `JWT_SECRET=your-production-secret`
+   - `PORT=8000` (or leave Railway's `$PORT`)
+   - `CORS_ORIGINS=https://your-frontend.vercel.app`
+5. Build command: `npm install && npx prisma generate`
+6. Start command: `npx prisma migrate deploy && npm start`
+   - `prisma migrate deploy` applies migrations on the production DB
+   - Run the seed once after first deploy: `npm run seed`
 
 ---
 
@@ -290,21 +285,33 @@ VITE_API_URL=https://your-backend.railway.app/api
 
 ## 🛠 Common Issues
 
-**`psycopg2` install fails:**
-```bash
-pip install psycopg2-binary
-```
+**`Can't reach database server` / Prisma connection error:**
+Make sure PostgreSQL is running and `DATABASE_URL` in `backend/.env` is correct (host, port, user, password, database name).
 
-**CORS error in browser:**  
-Make sure `CORS_ALLOWED_ORIGINS` in `.env` matches exactly where your frontend is running (`http://localhost:5173`).
+**`prisma migrate` fails with database does not exist:**
+Create the database first: `createdb expense_manager`.
 
-**`ModuleNotFoundError: No module named 'environ'`:**
-```bash
-pip install django-environ
-```
+**CORS error in browser:**
+Make sure `CORS_ORIGINS` in `backend/.env` matches exactly where your frontend runs (`http://localhost:5173`).
 
-**Frontend shows blank page:**  
+**401 errors after login / not staying logged in:**
+The access token lives 15 min; the axios layer auto-refreshes it. Ensure the backend is reachable at `VITE_API_URL` and cookies/localStorage aren't blocked.
+
+**Frontend shows blank page:**
 Check that `VITE_API_URL` in `frontend/.env` points to your running backend.
+
+**Port already in use:**
+Change `PORT` in `backend/.env` (backend) or run `npm run dev -- --port 5174` (frontend).
+
+---
+
+## 🧱 Tech Notes
+
+- **State management:** Redux Toolkit with `createAsyncThunk` for API calls; `redux-persist` keeps auth + theme across reloads.
+- **Auth:** JWT access tokens (short-lived) + opaque refresh tokens stored in the DB. "Remember me" issues a 30-day HttpOnly refresh cookie. Logout revokes the refresh token.
+- **ORM:** Prisma — schema in `backend/prisma/schema.prisma`, migrations via `prisma migrate`.
+- **File uploads:** Multer (receipts) stored under `backend/uploads/`.
+- **Reports:** CSV via `csv-parse`/`csv-stringify`, PDF via `pdfkit`.
 
 ---
 

@@ -1,17 +1,16 @@
 import api from './axios'
 
 export const splitsApi = {
-  listGroups: () => api.get('/splits/groups/'),
-  getGroup: (id) => api.get(`/splits/groups/${id}/`),
-  createGroup: (data) => api.post('/splits/groups/', data),
-  updateGroup: (id, data) => api.patch(`/splits/groups/${id}/`, data),
-  deleteGroup: (id) => api.delete(`/splits/groups/${id}/`),
-  addMember: (id, data) => api.post(`/splits/groups/${id}/add_member/`, data),
-  getBalances: (id) => api.get(`/splits/groups/${id}/balances/`),
-  settle: (id, data) => api.post(`/splits/groups/${id}/settle/`, data),
+  listGroups: () => api.get('/split-groups'),
+  getGroup: (id) => api.get(`/split-groups/${id}`),
+  createGroup: (data) => api.post('/split-groups', data),
+  updateGroup: (id, data) => api.patch(`/split-groups/${id}`, data),
+  deleteGroup: (id) => api.delete(`/split-groups/${id}`),
+  addMember: (id, data) => api.post(`/split-groups/${id}/members`, data),
+  getBalances: (id) => api.get(`/split-groups/${id}/balances`),
+  settle: (id, data) => api.post(`/split-groups/${id}/settle`, data),
 
-  listExpenses: (params) => api.get('/splits/expenses/', { params }),
-  createExpense: (data) => api.post('/splits/expenses/', data),
-  updateExpense: (id, data) => api.patch(`/splits/expenses/${id}/`, data),
-  deleteExpense: (id) => api.delete(`/splits/expenses/${id}/`),
+  listExpenses: (params) => api.get('/split-expenses', { params }),
+  createExpense: (data) => api.post('/split-expenses', data),
+  deleteExpense: (id) => api.delete(`/split-expenses/${id}`),
 }

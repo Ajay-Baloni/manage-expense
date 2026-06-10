@@ -1,17 +1,26 @@
 import axios from 'axios'
+import { keysToCamel, keysToSnake } from './caseConvert'
 
 const BASE_URL = import.meta.env.VITE_API_URL || '/api'
 
 const api = axios.create({
   baseURL: BASE_URL,
   headers: { 'Content-Type': 'application/json' },
+  withCredentials: true,
 })
 
-// Request interceptor: attach access token
+// Request interceptor: attach access token + convert payloads to camelCase.
 api.interceptors.request.use((config) => {
   const token = localStorage.getItem('access_token')
   if (token) {
     config.headers.Authorization = `Bearer ${token}`
+  }
+  // FormData (file uploads) passes through untouched.
+  if (config.data && !(config.data instanceof FormData)) {
+    config.data = keysToCamel(config.data)
+  }
+  if (config.params) {
+    config.params = keysToCamel(config.params)
   }
   return config
 })
@@ -36,7 +45,13 @@ function processQueue(error, token = null) {
 }
 
 api.interceptors.response.use(
-  (response) => response,
+  (response) => {
+    // Blob downloads (CSV/PDF export) are left as-is; JSON is mapped to snake_case.
+    if (response.data && response.config.responseType !== 'blob') {
+      response.data = keysToSnake(response.data)
+    }
+    return response
+  },
   async (error) => {
     const originalRequest = error.config
 
@@ -62,7 +77,7 @@ api.interceptors.response.use(
       }
 
       try {
-        const res = await axios.post(`${BASE_URL}/auth/refresh/`, { refresh })
+        const res = await axios.post(`${BASE_URL}/auth/refresh`, { refresh })
         const newAccess = res.data.access
         localStorage.setItem('access_token', newAccess)
         api.defaults.headers.common.Authorization = `Bearer ${newAccess}`

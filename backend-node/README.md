@@ -7,6 +7,7 @@ original Django backend. All money values are JSON numbers; all fields are camel
 
 ```bash
 cp .env.example .env          # then edit secrets / DATABASE_URL
+docker compose up -d          # start local PostgreSQL (or use your own)
 npm install
 npm run db:migrate            # create/apply Prisma migrations
 npm run db:seed               # insert default categories

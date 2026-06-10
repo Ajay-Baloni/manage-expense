@@ -4,19 +4,19 @@ export const reportsApi = {
   importCSV: (file) => {
     const formData = new FormData()
     formData.append('file', file)
-    return api.post('/reports/import/csv/', formData, {
+    return api.post('/reports/import', formData, {
       headers: { 'Content-Type': 'multipart/form-data' },
     })
   },
   exportCSV: (params) =>
-    api.get('/reports/export/csv/', {
+    api.get('/reports/export.csv', {
       params,
       responseType: 'blob',
     }),
   exportPDF: (params) =>
-    api.get('/reports/export/pdf/', {
+    api.get('/reports/export.pdf', {
       params,
       responseType: 'blob',
     }),
-  listImportJobs: () => api.get('/reports/import/jobs/'),
+  listImportJobs: () => api.get('/reports/import-jobs'),
 }

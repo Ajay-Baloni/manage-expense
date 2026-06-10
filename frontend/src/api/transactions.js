@@ -1,22 +1,22 @@
 import api from './axios'
 
 export const transactionsApi = {
-  list: (params) => api.get('/transactions/', { params }),
-  get: (id) => api.get(`/transactions/${id}/`),
-  create: (data) => api.post('/transactions/', data),
-  update: (id, data) => api.patch(`/transactions/${id}/`, data),
-  delete: (id) => api.delete(`/transactions/${id}/`),
-  dashboardSummary: () => api.get('/transactions/dashboard_summary/'),
+  list: (params) => api.get('/transactions', { params }),
+  get: (id) => api.get(`/transactions/${id}`),
+  create: (data) => api.post('/transactions', data),
+  update: (id, data) => api.patch(`/transactions/${id}`, data),
+  delete: (id) => api.delete(`/transactions/${id}`),
+  dashboardSummary: () => api.get('/transactions/dashboard-summary'),
 
   // Tags
-  listTags: () => api.get('/transactions/tags/'),
-  createTag: (data) => api.post('/transactions/tags/', data),
-  updateTag: (id, data) => api.patch(`/transactions/tags/${id}/`, data),
-  deleteTag: (id) => api.delete(`/transactions/tags/${id}/`),
+  listTags: () => api.get('/tags'),
+  createTag: (data) => api.post('/tags', data),
+  updateTag: (id, data) => api.patch(`/tags/${id}`, data),
+  deleteTag: (id) => api.delete(`/tags/${id}`),
 
   // Recurring
-  listRecurring: () => api.get('/transactions/recurring/'),
-  createRecurring: (data) => api.post('/transactions/recurring/', data),
-  updateRecurring: (id, data) => api.patch(`/transactions/recurring/${id}/`, data),
-  deleteRecurring: (id) => api.delete(`/transactions/recurring/${id}/`),
+  listRecurring: () => api.get('/recurring'),
+  createRecurring: (data) => api.post('/recurring', data),
+  updateRecurring: (id, data) => api.patch(`/recurring/${id}`, data),
+  deleteRecurring: (id) => api.delete(`/recurring/${id}`),
 }

@@ -2,7 +2,7 @@
 
 A full-stack personal finance manager with expense/income tracking, bill splitting (Splitwise-style), visual charts, import/export, and dark/light/system theme.
 
-**Stack:** React 18 + Vite · Django 4 + DRF · PostgreSQL · JWT Auth
+**Stack:** React 18 + Vite · Node + Express + TypeScript · Prisma · PostgreSQL · JWT Auth
 
 ---
 
@@ -30,124 +30,87 @@ A full-stack personal finance manager with expense/income tracking, bill splitti
 
 Make sure you have these installed:
 
-- **Python** 3.10+
 - **Node.js** 18+
-- **PostgreSQL** 14+
-- **pip** and **npm**
+- **npm**
+- **PostgreSQL** 14+ (or Docker, to use the bundled compose file)
 
 ---
 
-## ⚙️ Backend Setup (Django)
+## ⚙️ Backend Setup (Node + Express)
 
 ### 1. Navigate to backend
 
 ```bash
-cd backend
+cd backend-node
 ```
 
-### 2. Create a virtual environment
+### 2. Start PostgreSQL
+
+Use the bundled Docker Compose file (creates the `manage_expense_node` database):
 
 ```bash
-python -m venv venv
-
-# Activate it:
-# On Mac/Linux:
-source venv/bin/activate
-
-# On Windows:
-venv\Scripts\activate
+docker compose up -d
 ```
 
-### 3. Install dependencies
+Or point `DATABASE_URL` (next step) at your own PostgreSQL instance.
 
-```bash
-pip install -r requirements.txt
-```
-
-### 4. Create the `.env` file
-
-Create a file called `.env` inside the `backend/` folder:
+### 3. Create the `.env` file
 
 ```bash
 cp .env.example .env
 ```
 
-Then open `.env` and fill in your values:
+Then open `.env` and adjust values as needed:
 
 ```env
-# Django
-SECRET_KEY=any-long-random-string-here
-DEBUG=True
-ALLOWED_HOSTS=localhost,127.0.0.1
+NODE_ENV=development
+PORT=8000
+DATABASE_URL="postgresql://postgres:postgres@localhost:5432/manage_expense_node?schema=public"
 
-# PostgreSQL Database
-DB_NAME=expense_manager
-DB_USER=postgres
-DB_PASSWORD=your_postgres_password
-DB_HOST=localhost
-DB_PORT=5432
+JWT_ACCESS_SECRET=change-me-access-secret
+JWT_REFRESH_SECRET=change-me-refresh-secret
+ACCESS_TOKEN_TTL=15m
+REFRESH_TOKEN_TTL=7d
+REFRESH_TOKEN_TTL_REMEMBER=30d
 
 # CORS — allow frontend to talk to backend
-CORS_ALLOWED_ORIGINS=http://localhost:5173,http://localhost:3000
+CORS_ORIGINS=http://localhost:5173,http://localhost:3000
 
-# JWT token lifetimes
-JWT_ACCESS_TOKEN_LIFETIME_MINUTES=15
-JWT_REFRESH_TOKEN_LIFETIME_DAYS=7
-
-# File uploads
-MEDIA_ROOT=media/
+# Mail (console transport in dev when MAIL_HOST is empty)
+MAIL_HOST=
+MAIL_FROM="Manage Expense <no-reply@manage-expense.local>"
 ```
 
-> **SECRET_KEY tip:** Generate one by running:
-> ```bash
-> python -c "from django.core.management.utils import get_random_secret_key; print(get_random_secret_key())"
-> ```
-
-### 5. Create the PostgreSQL database
-
-Open your PostgreSQL shell (`psql`) and run:
-
-```sql
-CREATE DATABASE expense_manager;
-CREATE USER postgres WITH PASSWORD 'your_postgres_password';
-GRANT ALL PRIVILEGES ON DATABASE expense_manager TO postgres;
-```
-
-Or if you already have a postgres superuser, just create the DB:
+### 4. Install dependencies
 
 ```bash
-createdb expense_manager
+npm install
 ```
 
-### 6. Run migrations
+### 5. Run migrations
 
 ```bash
-python manage.py makemigrations accounts transactions categories splits reports
-python manage.py migrate
+npm run db:migrate
 ```
 
-### 7. Seed default categories
+### 6. Seed default categories
 
 ```bash
-python manage.py create_default_categories
+npm run db:seed
 ```
 
-This creates 17 default categories (Food, Transport, Shopping, etc.) available to all users.
+This creates the default categories (Food, Transport, Shopping, etc.) available to all users.
 
-### 8. Create a superuser (optional, for admin panel)
+### 7. Start the backend server
 
 ```bash
-python manage.py createsuperuser
+npm run dev      # tsx watch (development)
+# or: npm run build && npm start   (production)
 ```
 
-### 9. Start the backend server
+Backend runs at: **http://localhost:8000**
 
-```bash
-python manage.py runserver
-```
-
-Backend runs at: **http://localhost:8000**  
-Admin panel at: **http://localhost:8000/admin**
+> See [backend-node/README.md](backend-node/README.md) for the full API reference and architecture.
 
 ---
 
@@ -187,21 +150,25 @@ Frontend runs at: **http://localhost:5173**
 
 ```
 manage-expense/
-├── backend/
-│   ├── manage.py
-│   ├── requirements.txt
+├── backend-node/
+│   ├── package.json
+│   ├── docker-compose.yml      ← local PostgreSQL
 │   ├── .env                    ← you create this
 │   ├── .env.example            ← template
-│   ├── config/
-│   │   ├── settings.py
-│   │   ├── urls.py
-│   │   └── wsgi.py
-│   └── apps/
-│       ├── accounts/           ← auth, user profile
-│       ├── transactions/       ← income & expenses
-│       ├── categories/         ← categories & budgets
-│       ├── splits/             ← bill splitting
-│       └── reports/            ← import & export
+│   ├── prisma/
+│   │   ├── schema.prisma       ← data model
+│   │   ├── migrations/
+│   │   └── seed.ts             ← default categories
+│   └── src/
+│       ├── app.ts / server.ts  ← express app + bootstrap
+│       ├── config / lib / middleware / utils
+│       ├── jobs/               ← recurring cron, budget alerts
+│       └── modules/
+│           ├── auth/           ← auth, user profile
+│           ├── transactions/   ← income, expenses, tags, recurring
+│           ├── categories/     ← categories & budgets
+│           ├── splits/         ← bill splitting
+│           └── reports/        ← import & export
 │
 └── frontend/
     ├── package.json
@@ -219,22 +186,25 @@ manage-expense/
 
 ## 🔌 API Endpoints Reference
 
+All payloads are camelCase JSON. The frontend's Axios layer converts to/from
+snake_case automatically, so React components keep their existing field names.
+
 | Method | Endpoint | Description |
 |---|---|---|
-| POST | `/api/auth/register/` | Register new user |
-| POST | `/api/auth/login/` | Login (returns JWT tokens) |
-| POST | `/api/auth/logout/` | Logout |
-| POST | `/api/auth/token/refresh/` | Refresh access token |
-| GET/PUT | `/api/auth/profile/` | Get / update profile |
-| GET/POST | `/api/transactions/` | List / create transactions |
-| GET | `/api/transactions/dashboard_summary/` | Dashboard stats |
-| GET/POST | `/api/categories/` | List / create categories |
-| GET/POST | `/api/budgets/` | List / create budgets |
-| GET/POST | `/api/splits/groups/` | List / create split groups |
-| GET | `/api/splits/groups/:id/balances/` | Who owes whom |
-| POST | `/api/reports/import/csv/` | Import CSV |
-| GET | `/api/reports/export/csv/` | Export CSV |
-| GET | `/api/reports/export/pdf/` | Export PDF |
+| POST | `/api/auth/register` | Register new user |
+| POST | `/api/auth/login` | Login (returns JWT tokens) |
+| POST | `/api/auth/logout` | Logout |
+| POST | `/api/auth/refresh` | Refresh access token |
+| GET/PATCH | `/api/auth/profile` | Get / update profile |
+| GET/POST | `/api/transactions` | List / create transactions |
+| GET | `/api/transactions/dashboard-summary` | Dashboard stats |
+| GET/POST | `/api/categories` | List / create categories |
+| GET/POST | `/api/budgets` | List / create budgets |
+| GET/POST | `/api/split-groups` | List / create split groups |
+| GET | `/api/split-groups/:id/balances` | Who owes whom |
+| POST | `/api/reports/import` | Import CSV |
+| GET | `/api/reports/export.csv` | Export CSV |
+| GET | `/api/reports/export.pdf` | Export PDF |
 
 ---
 
@@ -245,7 +215,7 @@ manage-expense/
 | Service | Purpose | Cost |
 |---|---|---|
 | **Vercel** | React frontend | Free |
-| **Railway** | Django backend | Free tier / ~$5/mo |
+| **Railway** | Node/Express backend | Free tier / ~$5/mo |
 | **Railway** | PostgreSQL database | Included |
 | **Cloudflare R2** | Receipt image storage | Free up to 10GB |
 
@@ -265,15 +235,15 @@ VITE_API_URL=https://your-backend.railway.app/api
 ### Deploy Backend to Railway
 
 1. Go to **railway.app** → New Project → Deploy from GitHub
-2. Select the `backend/` folder
+2. Select the `backend-node/` folder
 3. Add a PostgreSQL plugin
 4. Set environment variables (same as your `.env` but with production values):
-   - `DEBUG=False`
-   - `SECRET_KEY=your-production-secret`
-   - `DB_NAME`, `DB_USER`, `DB_PASSWORD`, `DB_HOST`, `DB_PORT` (Railway provides these)
-   - `ALLOWED_HOSTS=your-backend.railway.app`
-   - `CORS_ALLOWED_ORIGINS=https://your-frontend.vercel.app`
-5. Add start command: `gunicorn config.wsgi:application --bind 0.0.0.0:$PORT`
+   - `NODE_ENV=production`
+   - `DATABASE_URL` (Railway provides this for its PostgreSQL plugin)
+   - `JWT_ACCESS_SECRET`, `JWT_REFRESH_SECRET` (long random strings)
+   - `CORS_ORIGINS=https://your-frontend.vercel.app`
+5. Build command: `npm install && npm run build && npm run db:deploy`
+6. Start command: `npm start`
 
 ---
 
@@ -290,17 +260,16 @@ VITE_API_URL=https://your-backend.railway.app/api
 
 ## 🛠 Common Issues
 
-**`psycopg2` install fails:**
-```bash
-pip install psycopg2-binary
-```
+**Prisma can't reach the database:**  
+Confirm PostgreSQL is running (`docker compose up -d` in `backend-node/`) and that
+`DATABASE_URL` in `backend-node/.env` matches its host, port, user, and database.
 
 **CORS error in browser:**  
-Make sure `CORS_ALLOWED_ORIGINS` in `.env` matches exactly where your frontend is running (`http://localhost:5173`).
+Make sure `CORS_ORIGINS` in `backend-node/.env` matches exactly where your frontend is running (`http://localhost:5173`).
 
-**`ModuleNotFoundError: No module named 'environ'`:**
+**`PrismaClient is not generated`:**
 ```bash
-pip install django-environ
+npm run db:generate
 ```
 
 **Frontend shows blank page:**  

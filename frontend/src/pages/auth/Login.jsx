@@ -3,13 +3,14 @@ import { Link, useNavigate } from 'react-router-dom'
 import { Button } from '../../components/ui/button'
 import { Input } from '../../components/ui/input'
 import { Label } from '../../components/ui/label'
-import { useAuthStore } from '../../store/authStore'
+import { useDispatch } from 'react-redux'
+import { login } from '../../store/authSlice'
 import { getErrorMessage } from '../../lib/utils'
 import toast from 'react-hot-toast'
 
 export default function Login() {
   const navigate = useNavigate()
-  const { login } = useAuthStore()
+  const dispatch = useDispatch()
   const [form, setForm] = useState({ email: '', password: '', remember_me: false })
   const [loading, setLoading] = useState(false)
 
@@ -17,7 +18,7 @@ export default function Login() {
     e.preventDefault()
     setLoading(true)
     try {
-      await login(form)
+      await dispatch(login(form)).unwrap()
       toast.success('Welcome back!')
       navigate('/')
     } catch (err) {

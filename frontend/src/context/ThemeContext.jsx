@@ -1,10 +1,13 @@
 import { createContext, useContext, useEffect } from 'react'
-import { useUiStore } from '../store/uiStore'
+import { useDispatch, useSelector } from 'react-redux'
+import { setTheme as setThemeAction } from '../store/uiSlice'
 
 const ThemeContext = createContext(null)
 
 export function ThemeProvider({ children }) {
-  const { theme, setTheme } = useUiStore()
+  const theme = useSelector((s) => s.ui.theme)
+  const dispatch = useDispatch()
+  const setTheme = (value) => dispatch(setThemeAction(value))
 
   useEffect(() => {
     const root = document.documentElement

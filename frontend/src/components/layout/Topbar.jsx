@@ -1,5 +1,6 @@
 import { Menu, Sun, Moon, Monitor } from 'lucide-react'
-import { useUiStore } from '../../store/uiStore'
+import { useDispatch } from 'react-redux'
+import { toggleSidebar as toggleSidebarAction } from '../../store/uiSlice'
 import { useTheme } from '../../context/ThemeContext'
 import { Button } from '../ui/button'
 
@@ -7,7 +8,8 @@ import { Button } from '../ui/button'
 // On desktop (lg+) it is hidden — the sidebar holds the theme toggle and the
 // page's own header provides the title.
 export function Topbar({ title }) {
-  const { toggleSidebar } = useUiStore()
+  const dispatch = useDispatch()
+  const toggleSidebar = () => dispatch(toggleSidebarAction())
   const { theme, setTheme } = useTheme()
 
   const cycleTheme = () => {

@@ -1,8 +1,8 @@
 import { useEffect, useState } from 'react'
+import { useDispatch, useSelector } from 'react-redux'
 import { Plus, Search, SlidersHorizontal, X, ChevronLeft, ChevronRight } from 'lucide-react'
-import { useTransactionStore } from '../../store/transactionStore'
-import { useCategoryStore } from '../../store/categoryStore'
-import { useAuthStore } from '../../store/authStore'
+import { fetchTransactions, setFilters as setFiltersAction, deleteTransaction } from '../../store/transactionSlice'
+import { fetchCategories } from '../../store/categorySlice'
 import { DataTable } from '../../components/DataTable'
 import { TransactionModal } from '../../components/TransactionModal'
 import { PageHeader } from '../../components/layout/PageHeader'
@@ -18,10 +18,13 @@ import toast from 'react-hot-toast'
 const FILTER_FIELDS = ['type', 'category', 'date_from', 'date_to', 'amount_min', 'amount_max']
 
 export default function Transactions({ defaultType = '', title, description }) {
-  const { transactions, filters, pagination, loading, fetchTransactions, setFilters, deleteTransaction } = useTransactionStore()
-  const { categories, fetchCategories } = useCategoryStore()
-  const { user } = useAuthStore()
+  const dispatch = useDispatch()
+  const { transactions, filters, pagination, loading } = useSelector((s) => s.transactions)
+  const categories = useSelector((s) => s.categories.categories)
+  const user = useSelector((s) => s.auth.user)
   const currency = user?.profile?.currency || 'INR'
+
+  const setFilters = (patch) => dispatch(setFiltersAction(patch))
 
   const [modalOpen, setModalOpen] = useState(false)
   const [editing, setEditing] = useState(null)
@@ -41,14 +44,14 @@ export default function Transactions({ defaultType = '', title, description }) {
   const setDraftField = (patch) => setDraft((d) => ({ ...d, ...patch }))
 
   useEffect(() => {
-    fetchCategories()
+    dispatch(fetchCategories())
     // Always reset the type to this page's locked type on mount, so a leftover
     // filter from another page (e.g. Income) doesn't leak into this one.
     setFilters({ type: defaultType || '' })
   }, [defaultType])
 
   useEffect(() => {
-    fetchTransactions(defaultType ? { type: defaultType } : {})
+    dispatch(fetchTransactions(defaultType ? { type: defaultType } : {}))
   }, [filters])
 
   // Seed the draft from the currently applied filters each time the popover opens.
@@ -77,7 +80,7 @@ export default function Transactions({ defaultType = '', title, description }) {
   const handleDelete = async (id) => {
     if (!confirm('Delete this transaction?')) return
     try {
-      await deleteTransaction(id)
+      await dispatch(deleteTransaction(id)).unwrap()
       toast.success('Transaction deleted')
     } catch (err) {
       toast.error(getErrorMessage(err))
@@ -86,7 +89,7 @@ export default function Transactions({ defaultType = '', title, description }) {
 
   const handleEdit = (t) => { setEditing(t); setModalOpen(true) }
   const handleAdd = () => { setEditing(null); setModalOpen(true) }
-  const handleClose = () => { setModalOpen(false); setEditing(null); fetchTransactions() }
+  const handleClose = () => { setModalOpen(false); setEditing(null); dispatch(fetchTransactions()) }
 
   const totalPages = Math.ceil(pagination.count / 20)
 

@@ -1,8 +1,8 @@
 import { useEffect } from 'react'
+import { useDispatch, useSelector } from 'react-redux'
 import { TrendingUp, TrendingDown, Percent, Wallet } from 'lucide-react'
-import { useTransactionStore } from '../store/transactionStore'
-import { useCategoryStore } from '../store/categoryStore'
-import { useAuthStore } from '../store/authStore'
+import { fetchSummary } from '../store/transactionSlice'
+import { fetchCurrentMonthBudgets } from '../store/categorySlice'
 import { SummaryCard } from '../components/SummaryCard'
 import { SpendingChart } from '../components/SpendingChart'
 import { CategoryPieChart } from '../components/CategoryPieChart'
@@ -11,15 +11,16 @@ import { PageHeader } from '../components/layout/PageHeader'
 import { Card, CardContent, CardHeader, CardTitle, CardDescription } from '../components/ui/card'
 
 export default function Dashboard() {
-  const { summary, fetchSummary } = useTransactionStore()
-  const { budgets, fetchCurrentMonthBudgets } = useCategoryStore()
-  const { user } = useAuthStore()
+  const dispatch = useDispatch()
+  const summary = useSelector((s) => s.transactions.summary)
+  const budgets = useSelector((s) => s.categories.budgets)
+  const user = useSelector((s) => s.auth.user)
   const currency = user?.profile?.currency || 'INR'
 
   useEffect(() => {
-    fetchSummary()
-    fetchCurrentMonthBudgets()
-  }, [])
+    dispatch(fetchSummary())
+    dispatch(fetchCurrentMonthBudgets())
+  }, [dispatch])
 
   const savingsRate = summary?.total_income > 0
     ? ((summary.net_balance / summary.total_income) * 100).toFixed(1)

@@ -1,5 +1,6 @@
 import { useState } from 'react'
-import { useAuthStore } from '../../store/authStore'
+import { useDispatch, useSelector } from 'react-redux'
+import { updateProfile } from '../../store/authSlice'
 import { useTheme } from '../../context/ThemeContext'
 import { authApi } from '../../api/auth'
 import { Button } from '../../components/ui/button'
@@ -33,7 +34,8 @@ const TIMEZONES = [
 ]
 
 export default function Settings() {
-  const { user, updateUser } = useAuthStore()
+  const dispatch = useDispatch()
+  const user = useSelector((s) => s.auth.user)
   const { setTheme } = useTheme()
 
   const [profileForm, setProfileForm] = useState({
@@ -53,8 +55,7 @@ export default function Settings() {
     e.preventDefault()
     setProfileLoading(true)
     try {
-      const res = await authApi.updateProfile(profileForm)
-      updateUser(res.data)
+      await dispatch(updateProfile(profileForm)).unwrap()
       setTheme(profileForm.profile.theme)
       toast.success('Profile saved')
     } catch (err) {

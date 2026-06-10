@@ -4,7 +4,8 @@ import { Button } from '../../components/ui/button'
 import { Input } from '../../components/ui/input'
 import { Label } from '../../components/ui/label'
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '../../components/ui/select'
-import { useAuthStore } from '../../store/authStore'
+import { useDispatch } from 'react-redux'
+import { register } from '../../store/authSlice'
 import { getErrorMessage } from '../../lib/utils'
 import toast from 'react-hot-toast'
 
@@ -19,7 +20,7 @@ const CURRENCIES = [
 
 export default function Register() {
   const navigate = useNavigate()
-  const { register } = useAuthStore()
+  const dispatch = useDispatch()
   const [form, setForm] = useState({
     email: '',
     first_name: '',
@@ -38,7 +39,7 @@ export default function Register() {
     }
     setLoading(true)
     try {
-      await register(form)
+      await dispatch(register(form)).unwrap()
       toast.success('Account created!')
       navigate('/')
     } catch (err) {

@@ -4,8 +4,9 @@ import { Button } from './ui/button'
 import { Input } from './ui/input'
 import { Label } from './ui/label'
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from './ui/select'
-import { useTransactionStore } from '../store/transactionStore'
-import { useCategoryStore } from '../store/categoryStore'
+import { useDispatch, useSelector } from 'react-redux'
+import { createTransaction, updateTransaction } from '../store/transactionSlice'
+import { fetchCategories } from '../store/categorySlice'
 import { getErrorMessage, formatDateInput } from '../lib/utils'
 import toast from 'react-hot-toast'
 
@@ -20,14 +21,14 @@ const EMPTY = {
 }
 
 export function TransactionModal({ open, onClose, transaction = null }) {
-  const { createTransaction, updateTransaction } = useTransactionStore()
-  const { categories, fetchCategories } = useCategoryStore()
+  const dispatch = useDispatch()
+  const categories = useSelector((s) => s.categories.categories)
   const [form, setForm] = useState(EMPTY)
   const [loading, setLoading] = useState(false)
 
   useEffect(() => {
-    fetchCategories()
-  }, [])
+    dispatch(fetchCategories())
+  }, [dispatch])
 
   useEffect(() => {
     if (transaction) {
@@ -56,7 +57,7 @@ export function TransactionModal({ open, onClose, transaction = null }) {
       const data = {
         ...form,
         amount: parseFloat(form.amount),
-        category: form.category ? parseInt(form.category) : null,
+        category: form.category || null,
       }
       if (!data.amount || isNaN(data.amount) || data.amount <= 0) {
         toast.error('Please enter a valid amount greater than 0')
@@ -74,10 +75,10 @@ export function TransactionModal({ open, onClose, transaction = null }) {
         return
       }
       if (transaction) {
-        await updateTransaction(transaction.id, data)
+        await dispatch(updateTransaction({ id: transaction.id, data })).unwrap()
         toast.success('Transaction updated')
       } else {
-        await createTransaction(data)
+        await dispatch(createTransaction(data)).unwrap()
         toast.success('Transaction created')
       }
       onClose()

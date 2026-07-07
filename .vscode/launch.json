@@ -1,0 +1,18 @@
+{
+  "version": "0.2.0",
+  "configurations": [
+    {
+      "name": "Debug backend (tsx)",
+      "type": "node",
+      "request": "launch",
+      "cwd": "${workspaceFolder}/backend-node",
+      "runtimeExecutable": "${workspaceFolder}/backend-node/node_modules/.bin/tsx",
+      "runtimeArgs": ["watch"],
+      "program": "${workspaceFolder}/backend-node/src/server.ts",
+      "envFile": "${workspaceFolder}/backend-node/.env",
+      "console": "integratedTerminal",
+      "autoAttachChildProcesses": true,
+      "skipFiles": ["<node_internals>/**", "**/node_modules/**"]
+    }
+  ]
+}

@@ -8,8 +8,6 @@ export const createTransactionSchema = z.object({
   category: z.string().nullable().optional(),
   date: ymd,
   description: z.string().min(1).max(255),
-  tagIds: z.array(z.string()).optional().default([]),
-  receiptUrl: z.string().optional().default(''),
   notes: z.string().optional().default(''),
 });
 
@@ -19,8 +17,6 @@ export const updateTransactionSchema = z.object({
   category: z.string().nullable().optional(),
   date: ymd.optional(),
   description: z.string().min(1).max(255).optional(),
-  tagIds: z.array(z.string()).optional(),
-  receiptUrl: z.string().optional(),
   notes: z.string().optional(),
 });
 
@@ -31,10 +27,6 @@ export const listTransactionsQuerySchema = z.object({
   dateTo: ymd.optional(),
   amountMin: z.coerce.number().optional(),
   amountMax: z.coerce.number().optional(),
-  tags: z
-    .union([z.string(), z.array(z.string())])
-    .optional()
-    .transform((v) => (v === undefined ? undefined : Array.isArray(v) ? v : v.split(','))),
   search: z.string().optional(),
   ordering: z.enum(['date', '-date', 'amount', '-amount', 'createdAt', '-createdAt']).optional().default('-date'),
 });

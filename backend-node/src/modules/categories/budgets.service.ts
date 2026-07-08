@@ -1,11 +1,11 @@
-import type { Budget, BudgetAlert, Category } from '@prisma/client';
+import type { Budget, Category } from '@prisma/client';
 import { prisma } from '../../lib/prisma.js';
 import { AppError } from '../../utils/AppError.js';
 import { periodRange, monthStart, parseYMD } from '../../utils/period.js';
 import { toNumber, toYMD } from '../../utils/serialize.js';
 import type { CreateBudgetInput, UpdateBudgetInput } from './budgets.schema.js';
 
-type BudgetWithRelations = Budget & { category: Category; alerts: BudgetAlert[] };
+type BudgetWithRelations = Budget & { category: Category };
 
 /** Serialize a budget with spend computed over its current period. */
 export async function serializeBudget(budget: BudgetWithRelations) {
@@ -32,17 +32,10 @@ export async function serializeBudget(budget: BudgetWithRelations) {
     period: budget.period,
     month: toYMD(budget.month),
     limitAmount: limit,
-    alertThreshold: budget.alertThreshold,
     spentAmount: spent,
     percentageUsed,
     periodStart: toYMD(start),
     periodEnd: toYMD(end),
-    alerts: budget.alerts.map((a) => ({
-      id: a.id,
-      triggeredAt: a.triggeredAt.toISOString(),
-      percentageUsed: toNumber(a.percentageUsed),
-      level: a.level,
-    })),
   };
 }
 
@@ -54,14 +47,14 @@ export async function listBudgets(userId: string, month?: string): Promise<Budge
   }
   return prisma.budget.findMany({
     where,
-    include: { category: true, alerts: { orderBy: { triggeredAt: 'desc' } } },
+    include: { category: true },
   });
 }
 
 async function loadBudget(userId: string, id: string): Promise<BudgetWithRelations> {
   const budget = await prisma.budget.findUnique({
     where: { id },
-    include: { category: true, alerts: { orderBy: { triggeredAt: 'desc' } } },
+    include: { category: true },
   });
   if (!budget || budget.userId !== userId) throw AppError.notFound('Budget not found');
   return budget;
@@ -86,10 +79,9 @@ export async function createBudget(userId: string, input: CreateBudgetInput): Pr
       categoryId: input.category,
       period: input.period ?? 'monthly',
       limitAmount: input.limitAmount,
-      alertThreshold: input.alertThreshold ?? 80,
       month: monthStart(),
     },
-    include: { category: true, alerts: true },
+    include: { category: true },
   });
   return budget;
 }
@@ -107,7 +99,6 @@ export async function updateBudget(
       ...(input.category ? { categoryId: input.category } : {}),
       ...(input.period ? { period: input.period } : {}),
       ...(input.limitAmount !== undefined ? { limitAmount: input.limitAmount } : {}),
-      ...(input.alertThreshold !== undefined ? { alertThreshold: input.alertThreshold } : {}),
     },
   });
   return loadBudget(userId, id);

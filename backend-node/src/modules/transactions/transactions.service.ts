@@ -1,18 +1,16 @@
-import type { Prisma, Category, Tag, Transaction } from '@prisma/client';
+import type { Prisma, Category, Transaction } from '@prisma/client';
 import { prisma } from '../../lib/prisma.js';
 import { AppError } from '../../utils/AppError.js';
 import { toNumber, toYMD } from '../../utils/serialize.js';
 import { parseYMD } from '../../utils/period.js';
 import { serializeCategory } from '../categories/categories.service.js';
-import { serializeTag } from './tags.service.js';
-import { checkBudgetThresholds } from '../../jobs/budgetAlerts.js';
 import type {
   CreateTransactionInput,
   UpdateTransactionInput,
   ListTransactionsQuery,
 } from './transactions.schema.js';
 
-type TransactionFull = Transaction & { category: Category | null; tags: Tag[] };
+type TransactionFull = Transaction & { category: Category | null };
 
 export function serializeTransaction(t: TransactionFull) {
   return {
@@ -23,8 +21,6 @@ export function serializeTransaction(t: TransactionFull) {
     categoryDetail: t.category ? serializeCategory(t.category) : null,
     date: toYMD(t.date),
     description: t.description,
-    tags: t.tags.map(serializeTag),
-    receiptUrl: t.receiptUrl,
     notes: t.notes,
     createdAt: t.createdAt.toISOString(),
     updatedAt: t.updatedAt.toISOString(),
@@ -54,9 +50,6 @@ export async function listTransactions(userId: string, q: ListTransactionsQuery)
     if (q.amountMin !== undefined) where.amount.gte = q.amountMin;
     if (q.amountMax !== undefined) where.amount.lte = q.amountMax;
   }
-  if (q.tags && q.tags.length > 0) {
-    where.tags = { some: { id: { in: q.tags } } };
-  }
   if (q.search) {
     where.OR = [
       { description: { contains: q.search, mode: 'insensitive' } },
@@ -66,15 +59,9 @@ export async function listTransactions(userId: string, q: ListTransactionsQuery)
 
   return prisma.transaction.findMany({
     where,
-    include: { category: true, tags: true },
+    include: { category: true },
     orderBy: [ORDER_MAP[q.ordering] ?? { date: 'desc' }, { createdAt: 'desc' }],
   });
-}
-
-async function validTagIds(userId: string, tagIds: string[]): Promise<string[]> {
-  if (tagIds.length === 0) return [];
-  const tags = await prisma.tag.findMany({ where: { userId, id: { in: tagIds } }, select: { id: true } });
-  return tags.map((t) => t.id);
 }
 
 async function assertCategoryUsable(userId: string, categoryId: string | null | undefined): Promise<void> {
@@ -88,17 +75,10 @@ async function assertCategoryUsable(userId: string, categoryId: string | null | 
 async function loadTransaction(userId: string, id: string): Promise<TransactionFull> {
   const txn = await prisma.transaction.findUnique({
     where: { id },
-    include: { category: true, tags: true },
+    include: { category: true },
   });
   if (!txn || txn.userId !== userId) throw AppError.notFound('Transaction not found');
   return txn;
-}
-
-/** Fire budget threshold checks after an expense change. Never throws. */
-async function maybeCheckBudget(txn: TransactionFull): Promise<void> {
-  if (txn.type === 'expense' && txn.category) {
-    await checkBudgetThresholds(txn.userId, txn.category);
-  }
 }
 
 export async function getTransaction(userId: string, id: string): Promise<TransactionFull> {
@@ -110,8 +90,7 @@ export async function createTransaction(
   input: CreateTransactionInput,
 ): Promise<TransactionFull> {
   await assertCategoryUsable(userId, input.category);
-  const tagIds = await validTagIds(userId, input.tagIds ?? []);
-  const txn = await prisma.transaction.create({
+  return prisma.transaction.create({
     data: {
       userId,
       type: input.type,
@@ -119,14 +98,10 @@ export async function createTransaction(
       categoryId: input.category ?? null,
       date: parseYMD(input.date)!,
       description: input.description,
-      receiptUrl: input.receiptUrl ?? '',
       notes: input.notes ?? '',
-      tags: { connect: tagIds.map((id) => ({ id })) },
     },
-    include: { category: true, tags: true },
+    include: { category: true },
   });
-  await maybeCheckBudget(txn);
-  return txn;
 }
 
 export async function updateTransaction(
@@ -145,20 +120,13 @@ export async function updateTransaction(
   }
   if (input.date !== undefined) data.date = parseYMD(input.date)!;
   if (input.description !== undefined) data.description = input.description;
-  if (input.receiptUrl !== undefined) data.receiptUrl = input.receiptUrl;
   if (input.notes !== undefined) data.notes = input.notes;
-  if (input.tagIds !== undefined) {
-    const tagIds = await validTagIds(userId, input.tagIds);
-    data.tags = { set: tagIds.map((tid) => ({ id: tid })) };
-  }
 
-  const txn = await prisma.transaction.update({
+  return prisma.transaction.update({
     where: { id },
     data,
-    include: { category: true, tags: true },
+    include: { category: true },
   });
-  await maybeCheckBudget(txn);
-  return txn;
 }
 
 export async function deleteTransaction(userId: string, id: string): Promise<void> {

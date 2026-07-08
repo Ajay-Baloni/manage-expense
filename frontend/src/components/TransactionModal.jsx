@@ -17,7 +17,6 @@ const EMPTY = {
   date: new Date().toISOString().split('T')[0],
   description: '',
   notes: '',
-  receipt_url: '',
 }
 
 export function TransactionModal({ open, onClose, transaction = null }) {
@@ -39,7 +38,6 @@ export function TransactionModal({ open, onClose, transaction = null }) {
         date: formatDateInput(transaction.date),
         description: transaction.description || '',
         notes: transaction.notes || '',
-        receipt_url: transaction.receipt_url || '',
       })
     } else {
       setForm(EMPTY)

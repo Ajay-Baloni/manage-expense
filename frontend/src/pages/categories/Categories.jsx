@@ -17,7 +17,7 @@ import { getErrorMessage } from '../../lib/utils'
 import toast from 'react-hot-toast'
 
 const EMPTY_CAT = { name: '', icon: 'tag', color: '#6366f1', type: 'both' }
-const EMPTY_BUDGET = { category: '', period: 'monthly', limit_amount: '', alert_threshold: 80 }
+const EMPTY_BUDGET = { category: '', period: 'monthly', limit_amount: '' }
 
 export default function Categories() {
   const dispatch = useDispatch()
@@ -51,7 +51,6 @@ export default function Categories() {
       category: b.category.toString(),
       period: b.period || 'monthly',
       limit_amount: b.limit_amount,
-      alert_threshold: b.alert_threshold,
     } : EMPTY_BUDGET)
     setBudgetModal(true)
   }
@@ -224,10 +223,6 @@ export default function Categories() {
             <div className="space-y-1">
               <Label>Budget Limit</Label>
               <Input type="number" step="0.01" min="0" value={budgetForm.limit_amount} onChange={(e) => setBudgetForm((f) => ({ ...f, limit_amount: e.target.value }))} required />
-            </div>
-            <div className="space-y-1">
-              <Label>Alert Threshold (%)</Label>
-              <Input type="number" min="0" max="100" value={budgetForm.alert_threshold} onChange={(e) => setBudgetForm((f) => ({ ...f, alert_threshold: parseInt(e.target.value) }))} />
             </div>
             <DialogFooter>
               <Button type="button" variant="outline" onClick={() => setBudgetModal(false)}>Cancel</Button>

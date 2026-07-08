@@ -18,7 +18,6 @@ const initialState = {
   transactions: [],
   pagination: { count: 0, next: null, previous: null },
   filters: { ...emptyFilters },
-  tags: [],
   summary: null,
   loading: false,
 }
@@ -52,11 +51,6 @@ export const updateTransaction = apiThunk('transactions/update', async ({ id, da
 export const deleteTransaction = apiThunk('transactions/delete', async (id) => {
   await transactionsApi.delete(id)
   return id
-})
-
-export const fetchTags = apiThunk('transactions/fetchTags', async () => {
-  const res = await transactionsApi.listTags()
-  return res.data.results || res.data
 })
 
 export const fetchSummary = apiThunk('transactions/summary', async () => {
@@ -96,9 +90,6 @@ const transactionSlice = createSlice({
       })
       .addCase(deleteTransaction.fulfilled, (state, action) => {
         state.transactions = state.transactions.filter((t) => t.id !== action.payload)
-      })
-      .addCase(fetchTags.fulfilled, (state, action) => {
-        state.tags = action.payload
       })
       .addCase(fetchSummary.fulfilled, (state, action) => {
         state.summary = action.payload

@@ -60,10 +60,7 @@ export const listTransactionsTool = tool(
 
 // --- WRITE tools (pause for editable confirmation) -------------------------
 
-// The model never sets tagIds/receiptUrl (tags need id lookups; receipts come
-// from file uploads), so they're omitted from what it can propose. The full
-// schemas still apply at execution time and fill the defaults.
-const createArgsSchema = createTransactionSchema.omit({ tagIds: true, receiptUrl: true });
+const createArgsSchema = createTransactionSchema;
 
 export const createTransactionTool = tool(
   async (input, config) => {
@@ -83,11 +80,9 @@ export const createTransactionTool = tool(
   },
 );
 
-const updateArgsSchema = updateTransactionSchema
-  .omit({ tagIds: true, receiptUrl: true })
-  .extend({
-    id: z.string().describe('ID of the transaction to update'),
-  });
+const updateArgsSchema = updateTransactionSchema.extend({
+  id: z.string().describe('ID of the transaction to update'),
+});
 
 export const updateTransactionTool = tool(
   async (input, config) => {

@@ -11,9 +11,6 @@ const ACTION_LABELS = {
   delete_transaction: 'Delete transaction',
 }
 
-// Not user-facing in the review card; values pass through unchanged on confirm.
-const HIDDEN_FIELDS = new Set(['tag_ids', 'receipt_url'])
-
 const selectClasses =
   'flex h-10 w-full rounded-md border border-input bg-background px-3 py-2 text-sm ring-offset-background focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring focus-visible:ring-offset-2'
 
@@ -86,7 +83,6 @@ export function ConfirmationCard({ pending, busy, onConfirm, onCancel }) {
       </p>
       <div className="space-y-2">
         {Object.entries(form)
-          .filter(([key]) => !HIDDEN_FIELDS.has(key))
           .map(([key, value]) => (
             <div key={key} className="space-y-1">
               <Label className="text-xs text-muted-foreground">{humanize(key)}</Label>

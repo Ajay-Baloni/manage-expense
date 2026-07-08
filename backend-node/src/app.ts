@@ -8,7 +8,6 @@ import { authRouter } from './modules/auth/auth.routes.js';
 import { categoriesRouter } from './modules/categories/categories.routes.js';
 import { budgetsRouter } from './modules/categories/budgets.routes.js';
 import { transactionsRouter } from './modules/transactions/transactions.routes.js';
-import { tagsRouter } from './modules/transactions/tags.routes.js';
 import { reportsRouter } from './modules/reports/reports.routes.js';
 import { assistantRouter } from './modules/assistant/assistant.routes.js';
 
@@ -33,7 +32,6 @@ export function createApp(): Express {
   app.use('/api/categories', categoriesRouter);
   app.use('/api/budgets', budgetsRouter);
   app.use('/api/transactions', transactionsRouter);
-  app.use('/api/tags', tagsRouter);
   app.use('/api/reports', reportsRouter);
   app.use('/api/assistant', assistantRouter);
 

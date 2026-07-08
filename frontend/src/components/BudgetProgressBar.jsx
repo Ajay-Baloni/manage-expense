@@ -4,7 +4,6 @@ import { formatCurrency, cn } from '../lib/utils'
 
 export function BudgetProgressBar({ budget, currency = 'INR', onEdit, onDelete }) {
   const pct = Math.min(budget.percentage_used || 0, 100)
-  const isWarning = pct >= budget.alert_threshold
   const isOver = pct >= 100
   const hasActions = onEdit || onDelete
 
@@ -24,7 +23,7 @@ export function BudgetProgressBar({ budget, currency = 'INR', onEdit, onDelete }
           )}
         </div>
         <div className="flex items-center gap-2 flex-shrink-0">
-          <span className={cn('text-xs whitespace-nowrap', isOver ? 'text-red-500 font-semibold' : isWarning ? 'text-orange-500' : 'text-muted-foreground')}>
+          <span className={cn('text-xs whitespace-nowrap', isOver ? 'text-red-500 font-semibold' : 'text-muted-foreground')}>
             {formatCurrency(budget.spent_amount, currency)} / {formatCurrency(budget.limit_amount, currency)}
           </span>
           {hasActions && (
@@ -53,10 +52,7 @@ export function BudgetProgressBar({ budget, currency = 'INR', onEdit, onDelete }
       </div>
       <Progress
         value={pct}
-        className={cn(
-          'h-2',
-          isOver ? '[&>div]:bg-red-500' : isWarning ? '[&>div]:bg-orange-500' : '[&>div]:bg-primary'
-        )}
+        className={cn('h-2', isOver ? '[&>div]:bg-red-500' : '[&>div]:bg-primary')}
       />
       {isOver && <p className="text-xs text-red-500">Over budget by {formatCurrency(budget.spent_amount - budget.limit_amount, currency)}</p>}
     </div>

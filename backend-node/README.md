@@ -20,13 +20,13 @@ Production: `npm run build && npm start`.
 
 ```
 src/
-  app.ts / server.ts          # express app + bootstrap (starts cron)
+  app.ts / server.ts          # express app + bootstrap
   config/env.ts               # Zod-validated environment
   lib/                        # prisma, jwt, mailer singletons
   middleware/                 # auth, error handler, multer upload
   utils/                      # asyncHandler, AppError, serialize, period
   modules/<domain>/           # routes + controller + service + schema per feature
-  jobs/                       # recurring cron, synchronous budget alerts
+  jobs/                       # synchronous budget alerts
 prisma/                       # schema.prisma, migrations, seed.ts
 ```
 
@@ -41,8 +41,6 @@ Controllers parse/validate (Zod) and shape responses; services hold business log
 | budgets | `GET/POST/PATCH/DELETE /budgets` (+ `?month=YYYY-MM`, `GET /budgets/current-month`) |
 | transactions | `GET/POST/GET:id/PATCH/DELETE /transactions` (filters: type, category, dateFrom/To, amountMin/Max, tags, search, ordering), `GET /transactions/dashboard-summary` |
 | tags | `GET/POST/PATCH/DELETE /tags` |
-| recurring | `GET/POST/PATCH/DELETE /recurring` |
-| splits | `/split-groups` CRUD + `POST /:id/members`, `GET /:id/balances`, `POST /:id/settle`; `/split-expenses` (GET/POST/DELETE) |
 | reports | `POST /reports/import` (CSV multipart), `GET /reports/export.csv`, `GET /reports/export.pdf`, `GET /reports/import-jobs` |
 
 ## Auth
@@ -55,4 +53,3 @@ cookie (or a `refresh` body field) and returns a fresh access token.
 
 - **Budget alerts** run synchronously after an expense write; dedup'd per
   `(budget, periodStart, level)`; emailed via nodemailer (console transport in dev).
-- **Recurring rules** are materialized into transactions by a daily `node-cron` job.

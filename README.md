@@ -11,7 +11,7 @@ A full-stack personal finance manager with expense/income tracking, bill splitti
 | Feature | Description |
 |---|---|
 | 🔐 Auth | Email + password login, JWT tokens, "remember me" (30-day auto-login) |
-| 💸 Expenses | Add/edit/delete expenses with category, tags, receipt upload, recurring rules |
+| 💸 Expenses | Add/edit/delete expenses with category, tags, receipt upload |
 | 💵 Income | Track income sources with descriptions and dates |
 | 📊 Dashboard | Summary cards + income vs expense chart + category pie chart |
 | 🗂 Categories | Default + custom categories with icons and colors |
@@ -162,12 +162,11 @@ manage-expense/
 │   └── src/
 │       ├── app.ts / server.ts  ← express app + bootstrap
 │       ├── config / lib / middleware / utils
-│       ├── jobs/               ← recurring cron, budget alerts
+│       ├── jobs/               ← budget alerts
 │       └── modules/
 │           ├── auth/           ← auth, user profile
-│           ├── transactions/   ← income, expenses, tags, recurring
+│           ├── transactions/   ← income, expenses, tags
 │           ├── categories/     ← categories & budgets
-│           ├── splits/         ← bill splitting
 │           └── reports/        ← import & export
 │
 └── frontend/

@@ -13,10 +13,4 @@ export const transactionsApi = {
   createTag: (data) => api.post('/tags', data),
   updateTag: (id, data) => api.patch(`/tags/${id}`, data),
   deleteTag: (id) => api.delete(`/tags/${id}`),
-
-  // Recurring
-  listRecurring: () => api.get('/recurring'),
-  createRecurring: (data) => api.post('/recurring', data),
-  updateRecurring: (id, data) => api.patch(`/recurring/${id}`, data),
-  deleteRecurring: (id) => api.delete(`/recurring/${id}`),
 }

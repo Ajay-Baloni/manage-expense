@@ -55,7 +55,6 @@ export const updateProfileSchema = z.object({
     .object({
       avatarUrl: z.string().optional(),
       currency: z.string().length(3).optional(),
-      timezone: z.string().max(50).optional(),
       theme: themeEnum.optional(),
     })
     .optional(),

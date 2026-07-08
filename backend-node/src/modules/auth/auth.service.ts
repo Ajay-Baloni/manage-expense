@@ -23,7 +23,6 @@ export function serializeUser(user: UserWithProfile) {
       ? {
           avatarUrl: user.profile.avatarUrl,
           currency: user.profile.currency,
-          timezone: user.profile.timezone,
           theme: user.profile.theme,
         }
       : null,
@@ -122,13 +121,11 @@ export async function updateProfile(userId: string, input: UpdateProfileInput): 
         create: {
           avatarUrl: p.avatarUrl ?? '',
           currency: p.currency ?? 'INR',
-          timezone: p.timezone ?? 'UTC',
           theme: p.theme ?? 'system',
         },
         update: {
           ...(p.avatarUrl !== undefined ? { avatarUrl: p.avatarUrl } : {}),
           ...(p.currency !== undefined ? { currency: p.currency } : {}),
-          ...(p.timezone !== undefined ? { timezone: p.timezone } : {}),
           ...(p.theme !== undefined ? { theme: p.theme } : {}),
         },
       },

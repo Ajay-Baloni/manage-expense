@@ -7,6 +7,7 @@ import uiReducer from './uiSlice'
 import categoryReducer from './categorySlice'
 import transactionReducer from './transactionSlice'
 import splitReducer from './splitSlice'
+import assistantReducer from './assistantSlice'
 
 // Persist auth (session) and ui (theme/sidebar) only — data slices refetch.
 const authPersistConfig = {
@@ -26,6 +27,7 @@ const rootReducer = combineReducers({
   categories: categoryReducer,
   transactions: transactionReducer,
   splits: splitReducer,
+  assistant: assistantReducer,
 })
 
 export const store = configureStore({

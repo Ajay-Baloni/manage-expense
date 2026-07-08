@@ -24,6 +24,9 @@ const envSchema = z.object({
   MAIL_FROM: z.string().default('Manage Expense <no-reply@manage-expense.local>'),
 
   UPLOAD_DIR: z.string().default('uploads'),
+
+  GROQ_API_KEY: z.string().min(1),
+  ASSISTANT_MODEL: z.string().default('openai/gpt-oss-120b'),
 });
 
 const parsed = envSchema.safeParse(process.env);

@@ -13,6 +13,7 @@ import { recurringRouter } from './modules/transactions/recurring.routes.js';
 import { splitGroupsRouter } from './modules/splits/splitGroups.routes.js';
 import { splitExpensesRouter } from './modules/splits/splitExpenses.routes.js';
 import { reportsRouter } from './modules/reports/reports.routes.js';
+import { assistantRouter } from './modules/assistant/assistant.routes.js';
 
 export function createApp(): Express {
   const app = express();
@@ -40,6 +41,7 @@ export function createApp(): Express {
   app.use('/api/split-groups', splitGroupsRouter);
   app.use('/api/split-expenses', splitExpensesRouter);
   app.use('/api/reports', reportsRouter);
+  app.use('/api/assistant', assistantRouter);
 
   app.use(notFoundHandler);
   app.use(errorHandler);

@@ -13,8 +13,6 @@ import Dashboard from './pages/Dashboard'
 import Transactions from './pages/transactions/Transactions'
 import Income from './pages/transactions/Income'
 import Categories from './pages/categories/Categories'
-import Splits from './pages/splits/Splits'
-import SplitDetail from './pages/splits/SplitDetail'
 import Reports from './pages/reports/Reports'
 import Settings from './pages/settings/Settings'
 
@@ -48,8 +46,6 @@ export default function App() {
             <Route path="/transactions" element={<Transactions />} />
             <Route path="/income" element={<Income />} />
             <Route path="/categories" element={<Categories />} />
-            <Route path="/splits" element={<Splits />} />
-            <Route path="/splits/:id" element={<SplitDetail />} />
             <Route path="/reports" element={<Reports />} />
             <Route path="/settings" element={<Settings />} />
           </Route>

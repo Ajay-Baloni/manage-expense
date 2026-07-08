@@ -8,14 +8,13 @@ const pageTitles = {
   '/transactions': 'Transactions',
   '/income': 'Income',
   '/categories': 'Categories',
-  '/splits': 'Split Expenses',
   '/reports': 'Reports & Import/Export',
   '/settings': 'Settings',
 }
 
 export function AppLayout() {
   const { pathname } = useLocation()
-  const title = pageTitles[pathname] || (pathname.startsWith('/splits/') ? 'Split Group' : 'Expense Manager')
+  const title = pageTitles[pathname] || 'Expense Manager'
 
   return (
     <div className="flex h-screen overflow-hidden bg-background">

@@ -24,14 +24,6 @@ const THEMES = [
   { value: 'dark', label: 'Dark' },
   { value: 'system', label: 'System' },
 ]
-const TIMEZONES = [
-  'UTC',
-  'Asia/Kolkata',
-  'America/New_York',
-  'America/Los_Angeles',
-  'Europe/London',
-  'Asia/Tokyo',
-]
 
 export default function Settings() {
   const dispatch = useDispatch()
@@ -43,7 +35,6 @@ export default function Settings() {
     last_name: user?.last_name || '',
     profile: {
       currency: user?.profile?.currency || 'INR',
-      timezone: user?.profile?.timezone || 'Asia/Kolkata',
       theme: user?.profile?.theme || 'system',
     },
   })
@@ -159,23 +150,6 @@ export default function Settings() {
                   </SelectContent>
                 </Select>
               </div>
-            </div>
-
-            <div className="space-y-1.5">
-              <Label className="text-sm font-medium">Timezone</Label>
-              <Select
-                value={profileForm.profile.timezone}
-                onValueChange={(v) => setNestedField('timezone', v)}
-              >
-                <SelectTrigger className="h-9 bg-background">
-                  <SelectValue />
-                </SelectTrigger>
-                <SelectContent className="bg-popover border border-border shadow-md">
-                  {TIMEZONES.map((tz) => (
-                    <SelectItem key={tz} value={tz}>{tz}</SelectItem>
-                  ))}
-                </SelectContent>
-              </Select>
             </div>
 
             <div className="pt-1">

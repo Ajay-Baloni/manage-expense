@@ -1,6 +1,6 @@
 import { NavLink, useNavigate } from 'react-router-dom'
 import {
-  LayoutDashboard, ArrowUpDown, Tag, Users, FileText,
+  LayoutDashboard, ArrowUpDown, Tag, FileText,
   Settings, LogOut, TrendingUp, X, BarChart2, Sun, Moon, Monitor
 } from 'lucide-react'
 import { useDispatch, useSelector } from 'react-redux'
@@ -15,7 +15,6 @@ const navItems = [
   { to: '/transactions', icon: ArrowUpDown, label: 'Transactions' },
   { to: '/income', icon: TrendingUp, label: 'Income' },
   { to: '/categories', icon: Tag, label: 'Categories' },
-  { to: '/splits', icon: Users, label: 'Splits' },
   { to: '/reports', icon: FileText, label: 'Reports' },
   { to: '/settings', icon: Settings, label: 'Settings' },
 ]
